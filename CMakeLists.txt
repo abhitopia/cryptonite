@@ -21,7 +21,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -lpthread")
 #add_subdirectory(lib)
 #add_subdirectory(lib/indicators)
 
-add_executable(cryptonite main.cpp dataset.cpp dataset.h lib/csv/csv.h lib/date/date.h)
+add_executable(cryptonite main.cpp dataset.cpp dataset.h lib/csv/csv.h lib/date/date.h lib/cli/CLI11.hpp)
 
 
 
