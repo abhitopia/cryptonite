@@ -139,6 +139,22 @@ spda_t min_arrays(int num_bars, spda_t a, spda_t b) {
     return result;
 }
 
+spda_t rolling_sum(int num_bars, spda_t source, int period) {
+    spda_t cumsum{new double [num_bars]}, result{new double[num_bars]};
+    double cumsum_at_i = 0.0;
+
+    for(int i=0; i< num_bars; i++){
+        cumsum[i] = source[i] + cumsum_at_i;
+        cumsum_at_i += source[i];
+        if(i < period){
+            result[i] = dNaN;
+        } else {
+            result[i] = cumsum[i] - cumsum[i-period];
+        }
+    }
+    return result;
+}
+
 void IndicatorConfig::print() {
     trigger->to_json();
     for (auto const& [key, val] : params){
@@ -226,11 +242,10 @@ unordered_map<string, spda_t> DeMarker::compute(const Dataset &dataset, const In
     int num_bars = dataset.num_bars;
     auto high_i_1 = shift(num_bars, 1, dataset.high);  //  i-1
     auto low_i_1 = shift(num_bars, 1, dataset.low);  // i-1
-    auto zero = sub(num_bars, {dataset.high, dataset.high})[0];
     auto diff_high =  sub(num_bars, {dataset.high, high_i_1})[0];
-    auto de_max = max_arrays(num_bars, diff_high, zero);
+    auto de_max = max_arrays(num_bars, diff_high, dataset.zero);
     auto diff_low = sub(num_bars, {low_i_1, dataset.low})[0];
-    auto de_min = max_arrays(num_bars, diff_low, zero);
+    auto de_min = max_arrays(num_bars, diff_low, dataset.zero);
     auto numerator = sma(num_bars, {de_max}, {config.params.at("period")})[0];
     auto denominator = sma(num_bars, {de_min}, {config.params.at("period")})[0];
     auto value = CIndicator::div(num_bars, {numerator, add(num_bars, {denominator, numerator})[0]})[0];
@@ -271,7 +286,6 @@ unordered_map<string, spda_t> Envelopes::compute(const Dataset &dataset, const I
 unordered_map<string, spda_t> ForceIndex::compute(const Dataset &dataset, const IndicatorConfig &config) {
     int num_bars = dataset.num_bars;
     auto ma_method = (MAMethod) (int) config.params.at("ma_method");
-    auto zero = sub(num_bars, {dataset.high, dataset.high})[0];
     auto ma = apply_ma(num_bars, (int) config.params.at("period"), dataset.close, ma_method);
     auto ma_i_1 = shift(num_bars, 1, ma);  //  i-1
     spda_t fi{new double [num_bars]};
@@ -280,7 +294,7 @@ unordered_map<string, spda_t> ForceIndex::compute(const Dataset &dataset, const 
         fi[i] = volume[i] * (ma[i] - ma_i_1[i]);
     }
 
-    unordered_map<string, spda_t> result{{"value", fi}, {"zero", zero}};
+    unordered_map<string, spda_t> result{{"value", fi}, {"zero", dataset.zero}};
     return result;
 }
 
@@ -290,9 +304,8 @@ unordered_map<string, spda_t> MACD::compute(const Dataset &dataset, const Indica
     auto fast_period = config.params.at("fast_period");
     auto slow_period = config.params.at("slow_period");
     auto signal_period = config.params.at("signal_period");
-    auto zero = sub(num_bars, {dataset.high, dataset.high})[0];
     auto macd_ind = macd(num_bars, {source}, {fast_period, slow_period, signal_period})[0];
-    unordered_map<string, spda_t> result{{"value", macd_ind}, {"zero", zero}};
+    unordered_map<string, spda_t> result{{"value", macd_ind}, {"zero", dataset.zero}};
     return result;
 }
 
@@ -351,5 +364,189 @@ unordered_map<string, spda_t> MovingAverageCrossOver::compute(const Dataset &dat
 
 unordered_map<string, spda_t> OnBalanceVolume::compute(const Dataset &dataset, const IndicatorConfig &config) {
     unordered_map<string, spda_t> result{{"value", obv(dataset.num_bars, {dataset.close, dataset.volume})[0]}};
+    return result;
+}
+
+unordered_map<string, spda_t> RelativeStrengthIndex::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
+    unordered_map<string, spda_t> result{{"value", rsi(dataset.num_bars, {source}, {config.params.at("period")})[0]}};
+    return result;
+}
+
+unordered_map<string, spda_t> RelativeVigorIndex::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    // Ref: https://www.investopedia.com/terms/r/relative_vigor_index.asp
+    int num_bars = dataset.num_bars;
+
+    auto a = sub(num_bars, {dataset.close, dataset.open})[0];
+    auto b = shift(num_bars, 1, a);
+    auto c = shift(num_bars, 1, b);
+    auto d = shift(num_bars, 1, c);
+
+    auto e = sub(num_bars, {dataset.high, dataset.low})[0];
+
+    auto f = shift(num_bars, 1, e);
+    auto g = shift(num_bars, 1, f);
+    auto h = shift(num_bars, 1, g);
+
+    spda_t num{new double [num_bars]}, dem{new double [num_bars]};
+
+    for(int i=0; i< num_bars; i++){
+        num[i] = (a[i] + 2.0 * b[i] + 2.0 * c[i] + d[i]) / 6.0;
+        dem[i] = (e[i] + 2.0 * f[i] + 2.0 * g[i] + h[i]) / 6.0;
+    }
+
+    auto period = config.params.at("period");
+    auto sma_num = sma(num_bars, {num}, {period})[0];
+    auto sma_dem = sma(num_bars, {dem}, {period})[0];
+
+    auto rvi = CIndicator::div(num_bars, {sma_num, sma_dem})[0];
+    unordered_map<string, spda_t> result{{"value", rvi}};
+    return result;
+}
+
+unordered_map<string, spda_t> RelativeVigorIndexSignal::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    // Ref: https://www.investopedia.com/terms/r/relative_vigor_index.asp
+    int num_bars = dataset.num_bars;
+
+    auto a = sub(num_bars, {dataset.close, dataset.open})[0];
+    auto b = shift(num_bars, 1, a);
+    auto c = shift(num_bars, 1, b);
+    auto d = shift(num_bars, 1, c);
+
+    auto e = sub(num_bars, {dataset.high, dataset.low})[0];
+
+    auto f = shift(num_bars, 1, e);
+    auto g = shift(num_bars, 1, f);
+    auto h = shift(num_bars, 1, g);
+
+    spda_t num{new double [num_bars]}, dem{new double [num_bars]};
+
+    for(int i=0; i< num_bars; i++){
+        num[i] = (a[i] + 2.0 * b[i] + 2.0 * c[i] + d[i]) / 6.0;
+        dem[i] = (e[i] + 2.0 * f[i] + 2.0 * g[i] + h[i]) / 6.0;
+    }
+
+    auto period = config.params.at("period");
+    auto sma_num = sma(num_bars, {num}, {period})[0];
+    auto sma_dem = sma(num_bars, {dem}, {period})[0];
+
+    auto rvi = CIndicator::div(num_bars, {sma_num, sma_dem})[0];
+    auto rvi_1 = shift(num_bars, 1, rvi);
+    auto rvi_2 = shift(num_bars, 1, rvi_1);
+    auto rvi_3 = shift(num_bars, 1, rvi_2);
+    spda_t signal{new double [num_bars]};
+    for(int i=0; i< num_bars; i++){
+        signal[i] =(rvi[i] + 2.0 * rvi_1[i] + 2.0 * rvi_2[i] + rvi_3[i]) / 6.0;
+    }
+
+    unordered_map<string, spda_t> result{{"rvi", rvi}, {"signal", signal}};
+    return result;
+}
+
+unordered_map<string, spda_t> StandardDeviation::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
+    unordered_map<string, spda_t> result{{"value", stddev(dataset.num_bars, {source}, {config.params.at("period")})[0]}};
+    return result;
+}
+
+unordered_map<string, spda_t> Stochastic::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    auto pct_k_period = config.params.at("pct_k_period");
+    auto pct_k_slowing_period = config.params.at("pct_k_slowing_period");
+    auto pct_d_period = config.params.at("pct_d_period");
+    auto stoch_ind = stoch(dataset.num_bars,
+                           {dataset.high, dataset.low, dataset.close},
+                           {pct_k_period, pct_k_slowing_period, pct_d_period});
+
+    unordered_map<string, spda_t> result{{"value",stoch_ind[0]}};
+    return result;
+}
+
+unordered_map<string, spda_t> StochasticSignal::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    auto pct_k_period = config.params.at("pct_k_period");
+    auto pct_k_slowing_period = config.params.at("pct_k_slowing_period");
+    auto pct_d_period = config.params.at("pct_d_period");
+    auto stoch_ind = stoch(dataset.num_bars,
+                           {dataset.high, dataset.low, dataset.close},
+                           {pct_k_period, pct_k_slowing_period, pct_d_period});
+
+    unordered_map<string, spda_t> result{{"stoch", stoch_ind[0]}, {"signal", stoch_ind[1]}};
+    return result;
+}
+
+unordered_map<string, spda_t> Volumes::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    return unordered_map<string, spda_t>{{"value", dataset.volume}};
+}
+
+unordered_map<string, spda_t> WilliamsPercentRange::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    unordered_map<string, spda_t> result{{"value", willr(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
+    return result;
+}
+
+unordered_map<string, spda_t> CandleColor::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    int num_bars = dataset.num_bars;
+    double min_change_pct = config.params.at("min_change_pct") / 100.0;
+    spda_t offset{new double[num_bars]}, bearish{new double[num_bars]}, bullish{new double [num_bars]};
+    for(int i=0; i<num_bars; i++){
+        offset[i] = dataset.open[i] * min_change_pct;
+        bearish[i] = 0.0;
+        bullish[i] = 0.0;
+
+        if (dataset.close[i] < (dataset.open[i] - offset[i])){
+            bearish[i] = 1.0;
+        } else if (dataset.close[i] > (dataset.open[i] + offset[i])){
+            bullish[i] = 1.0;
+        }
+    }
+
+    auto period = (int) config.params.at("consecutive_period");
+
+    auto rolling_bear = rolling_sum(num_bars, bearish, period);
+    auto rolling_bull = rolling_sum(num_bars, bullish, period);
+
+    spda_t cc{new double[num_bars]};
+    for(int i=0; i< num_bars; i++){
+        if(rolling_bull[i] >= period){
+            cc[i] = 1.0;
+        } else if (rolling_bear[i] >= period){
+            cc[i] = -1.0;
+        } else {
+            cc[i] = 0.0;
+        }
+    }
+
+    unordered_map<string, spda_t> result {{"value", cc}, {"zero", dataset.zero}};
+    return result;
+}
+
+unordered_map<string, spda_t> PinBar::compute(const Dataset &dataset, const IndicatorConfig &config) {
+    int num_bars = dataset.num_bars;
+    spda_t pb{new double[num_bars]};
+    double body_len{}, wick_len{}, nose_len{}, body_pct{}, wick_pct{}, tot_len{};
+    double max_body_pct = config.params.at("max_body_pct");
+    double min_wick_pct = config.params.at("min_wick_pct");
+    for(int i=0; i<num_bars; i++){
+        if (dataset.close[i] < dataset.open[i]){ // bearish pin
+            wick_len = dataset.high[i] - dataset.open[i];
+            nose_len = dataset.close[i] - dataset.low[i];
+            body_len = dataset.open[i] - dataset.close[i];
+        } else { // bullish pin
+            wick_len = dataset.open[i] - dataset.low[i];
+            nose_len = dataset.high[i] - dataset.close[i];
+            body_len = dataset.close[i] - dataset.open[i];
+        }
+        tot_len = (dataset.high[i] - dataset.low[i]);
+        body_pct = ( body_len * 100.0 ) / tot_len;
+        wick_pct = ( wick_len * 100.0) / tot_len;
+        pb[i] = 0.0;
+        if (wick_len > body_len && nose_len < wick_len && body_pct <= max_body_pct && wick_pct >= min_wick_pct){
+            if (dataset.close[i] < dataset.open[i]){ // bearish pin
+                pb[i] = -1.0;
+            } else if (dataset.close[i] > dataset.open[i]) { // bullish pin
+               pb[i] = 1.0;
+            }
+        }
+    }
+
+    unordered_map<string, spda_t> result {{"value", pb}, {"zero", dataset.zero}};
     return result;
 }

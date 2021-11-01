@@ -34,6 +34,8 @@ int sample_gaussian_int(double mean, double sigma, int min, int max);
 spda_t shift(int num_bars, int offset, spda_t source, double fill_value=dNaN);
 spda_t max_arrays(int num_bars, spda_t a, spda_t b);
 spda_t min_arrays(int num_bars, spda_t a, spda_t b);
+spda_t rolling_sum(int num_bars, spda_t source, int period);
+
 
 
 class Indicator {
@@ -425,6 +427,149 @@ public:
         name="OnBalanceVolume";
         triggers = riseFallTriggers("value") +
                    directionChangeTriggers("value");
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class RelativeStrengthIndex : public Indicator {
+public:
+    RelativeStrengthIndex(){
+        name="RelativeStrengthIndex";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["period"] = 14;
+        defaults["apply_to"] = ApplyTo::CLOSE;
+        defaults["level"] = 30.0;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class RelativeVigorIndex : public Indicator {
+public:
+    RelativeVigorIndex(){
+        name="RelativeVigorIndex";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["period"] = 10;
+        defaults["level"] = 0.0;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class RelativeVigorIndexSignal : public Indicator {
+public:
+    RelativeVigorIndexSignal(){
+        name="RelativeVigorIndexSignal";
+        triggers = higherLowerThanTriggers("rvi", "signal") +
+                   crossingTriggers("rvi", "signal");
+        defaults["period"] = 10;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class StandardDeviation : public Indicator {
+public:
+    StandardDeviation(){
+        name="StandardDeviation";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["period"] = 20;
+        defaults["level"] = 0.0;
+        defaults["apply_to"] = ApplyTo::CLOSE;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class Stochastic : public Indicator {
+public:
+    Stochastic(){
+        name="Stochastic";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["pct_k_period"] = 5;
+        defaults["pct_k_slowing_period"] = 3;
+        defaults["pct_d_period"] = 3;
+        defaults["level"] = 20;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class StochasticSignal : public Indicator {
+public:
+    StochasticSignal(){
+        name="StochasticSignal";
+        triggers = higherLowerThanTriggers("stoch", "signal") +
+                   crossingTriggers("stoch", "signal");
+        defaults["pct_k_period"] = 5;
+        defaults["pct_k_slowing_period"] = 3;
+        defaults["pct_d_period"] = 3;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class Volumes : public Indicator {
+public:
+    Volumes(){
+        name="Volumes";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["level"] = 1000;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class WilliamsPercentRange : public Indicator {
+public:
+    WilliamsPercentRange(){
+        name="WilliamsPercentRange";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["level"] = -20;
+        defaults["period"] = 14;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class CandleColor : public Indicator {
+public:
+    CandleColor(){
+        name="CandleColor";
+        triggers = higherLowerThanTriggers("value", "zero");
+        defaults["min_change_pct"] = 1.0;
+        defaults["consecutive_period"] = 2;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class PinBar : public Indicator {
+public:
+    PinBar(){
+        name="PinBar";
+        triggers = higherLowerThanTriggers("value", "zero");
+        defaults["max_body_pct"] = 8.0;
+        defaults["min_wick_pct"] = 30.0;
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
