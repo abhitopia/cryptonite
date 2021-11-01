@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "trigger.h"
 #include "random.h"
 #include "dataset.h"
@@ -574,7 +575,6 @@ public:
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
-//vector<Indicator> Indicators{AcceleratorOscillator{}};
-
+extern vector<std::shared_ptr<Indicator>> Indicators;
 
 #endif //CRYPTONITE_INDICATOR_H

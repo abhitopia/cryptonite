@@ -550,3 +550,39 @@ unordered_map<string, spda_t> PinBar::compute(const Dataset &dataset, const Indi
     unordered_map<string, spda_t> result {{"value", pb}, {"zero", dataset.zero}};
     return result;
 }
+
+
+vector<std::shared_ptr<Indicator>> Indicators{
+        std::make_unique<AcceleratorOscillator>(),
+        std::make_unique<AccumulationDistribution>(),
+        std::make_unique<ADX>(),
+        std::make_unique<Alligator>(),
+        std::make_unique<AverageTrueRange>(),
+        std::make_unique<BearsPower>(),
+        std::make_unique<BullsPower>(),
+        std::make_unique<BollingerBands>(),
+        std::make_unique<CommodityChannelIndex>(),
+        std::make_unique<DeMarker>(),
+        std::make_unique<DirectionalIndicators>(),
+        std::make_unique<DonchianChannel>(),
+        std::make_unique<Envelopes>(),
+        std::make_unique<ForceIndex>(),
+        std::make_unique<MACD>(),
+        std::make_unique<MACDSignal>(),
+        std::make_unique<Momentum>(),
+        std::make_unique<MoneyFlowIndex>(),
+        std::make_unique<MovingAverage>(),
+        std::make_unique<MovingAverageOscillator>(),
+        std::make_unique<MovingAverageCrossOver>(),
+        std::make_unique<OnBalanceVolume>(),
+        std::make_unique<RelativeStrengthIndex>(),
+        std::make_unique<RelativeVigorIndex>(),
+        std::make_unique<RelativeVigorIndexSignal>(),
+        std::make_unique<StandardDeviation>(),
+        std::make_unique<Stochastic>(),
+        std::make_unique<StochasticSignal>(),
+        std::make_unique<Volumes>(),
+        std::make_unique<WilliamsPercentRange>(),
+        std::make_unique<CandleColor>(),
+        std::make_unique<PinBar>()
+};
