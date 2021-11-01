@@ -31,6 +31,10 @@ enum MAMethod { WMA, EMA, SMA, SSMA};
 enum ApplyTo { OPEN, HIGH, CLOSE, LOW, MEDIAN, TYPICAL, WEIGHTED};
 
 int sample_gaussian_int(double mean, double sigma, int min, int max);
+spda_t shift(int num_bars, int offset, spda_t source, double fill_value=dNaN);
+spda_t max_arrays(int num_bars, spda_t a, spda_t b);
+spda_t min_arrays(int num_bars, spda_t a, spda_t b);
+
 
 class Indicator {
 protected:
@@ -45,7 +49,6 @@ public:
     void to_json();
     spda_t get_source(const Dataset &dataset, ApplyTo apply_to);
     spda_t apply_ma(int num_bars, double period, spda_t source, MAMethod ma_method);
-    spda_t shift(int num_bars, int offset, spda_t source, double fill_value=dNaN);
 };
 
 class AcceleratorOscillator: public Indicator {
@@ -202,9 +205,9 @@ public:
                    crossingTriggers("bar", "lower") +
                    vector<Trigger>{HigherThan{"bar", "upper"}, LowerThan{"bar", "lower"}};
 
-        defaults["level"] =  0.00;
+        defaults["period"] =  20;
         defaults["deviation"] =  2.0;
-        defaults["apply_to"] = (double) ApplyTo::MEDIAN;
+        defaults["apply_to"] = (double) ApplyTo::CLOSE;
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -237,6 +240,191 @@ public:
         defaults["level"] =  0.3;
         defaults["period"] =  14;
 
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+class DirectionalIndicators : public Indicator {
+public:
+    DirectionalIndicators(){
+        name="DirectionalIndicators";
+        triggers = higherLowerThanTriggers("plus", "minus") +
+                   crossingTriggers("plus", "minus");
+        defaults["period"] =  10;
+
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+class DonchianChannel : public Indicator {
+public:
+    DonchianChannel(){
+        name="DonchianChannel";
+        triggers = crossingTriggers("bar", "upper") +
+                   crossingTriggers("bar", "lower") +
+                   vector<Trigger>{HigherThan{"bar", "upper"}, LowerThan{"bar", "lower"}};
+
+        defaults["period"] =  10;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class Envelopes : public Indicator {
+public:
+    Envelopes(){
+        name="Envelopes";
+        triggers = crossingTriggers("bar", "upper") +
+                   crossingTriggers("bar", "lower") +
+                   vector<Trigger>{HigherThan{"bar", "upper"}, LowerThan{"bar", "lower"}};
+
+        defaults["period"] = 14;
+        defaults["deviation_pct"] = 10;
+        defaults["ma_method"] = MAMethod::SMA;
+        defaults["apply_to"] = ApplyTo::CLOSE;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class ForceIndex : public Indicator {
+public:
+    ForceIndex(){
+        name="ForceIndex";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "zero") +
+                   crossingTriggers("value", "zero") +
+                   directionChangeTriggers("value");
+        defaults["ma_method"] =  MAMethod::SMA;
+        defaults["period"] =  13;
+
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class MACD : public Indicator {
+public:
+    MACD(){
+        name="MACD";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "zero") +
+                   crossingTriggers("value", "zero") +
+                   directionChangeTriggers("value");
+        defaults["fast_period"] = 12;
+        defaults["slow_period"] = 26;
+        defaults["signal_period"] = 9;
+        defaults["apply_to"] = ApplyTo::CLOSE;
+
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class MACDSignal : public Indicator {
+public:
+    MACDSignal(){
+        name="MACDSignal";
+        triggers = higherLowerThanTriggers("macd", "signal") +
+                   crossingTriggers("macd", "signal");
+        defaults["fast_period"] = 12;
+        defaults["slow_period"] = 26;
+        defaults["signal_period"] = 9;
+        defaults["apply_to"] = ApplyTo::CLOSE;
+
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class Momentum : public Indicator {
+public:
+    Momentum(){
+        name="Momentum";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["period"] = 14.0;
+        defaults["level"] = 100.0;
+        defaults["apply_to"] = ApplyTo::CLOSE;
+
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class MoneyFlowIndex : public Indicator {
+public:
+    MoneyFlowIndex(){
+        name="MoneyFlowIndex";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["period"] = 14.0;
+        defaults["level"] = 20.0;
+
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class MovingAverage : public Indicator {
+public:
+    MovingAverage(){
+        name="MovingAverage";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "bar") +
+                   crossingTriggers("value", "bar") +
+                   directionChangeTriggers("value");
+        defaults["period"] = 14.0;
+        defaults["shift"] = 0.0;
+        defaults["ma_method"] = MAMethod::SMA;
+        defaults["apply_to"] = ApplyTo::CLOSE;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class MovingAverageOscillator : public Indicator {
+public:
+    MovingAverageOscillator(){
+        name="MovingAverageOscillator";
+        triggers = riseFallTriggers("value") +
+                   higherLowerThanTriggers("value", "level") +
+                   crossingTriggers("value", "level") +
+                   directionChangeTriggers("value");
+        defaults["fast_period"] = 12;
+        defaults["slow_period"] = 26;
+        defaults["signal_period"] = 9;
+        defaults["apply_to"] = ApplyTo::CLOSE;
+        defaults["level"] = 0.0;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class MovingAverageCrossOver : public Indicator {
+public:
+    MovingAverageCrossOver(){
+        name="MovingAverageCrossOver";
+        triggers = higherLowerThanTriggers("fast", "slow") +
+                   crossingTriggers("fast", "slow");
+        defaults["fast_period"] = 12;
+        defaults["slow_period"] = 26;
+        defaults["ma_method"] = MAMethod::SMA;
+    }
+    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+};
+
+
+class OnBalanceVolume : public Indicator {
+public:
+    OnBalanceVolume(){
+        name="OnBalanceVolume";
+        triggers = riseFallTriggers("value") +
+                   directionChangeTriggers("value");
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
