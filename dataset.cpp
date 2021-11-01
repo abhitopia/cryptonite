@@ -72,5 +72,6 @@ Dataset::Dataset(int num_bars, int* timestamp, double* open, double* high,
     this->median = CIndicator::medprice(num_bars, {this->high, this->low})[0];
     this->typical = CIndicator::typprice(num_bars, {this->high, this->low, this->close})[0];
     this->weighted = CIndicator::wcprice(num_bars, {this->high, this->low, this->close})[0];
+    this->zero = CIndicator::sub(num_bars, {this->high, this->high})[0];
 }
 

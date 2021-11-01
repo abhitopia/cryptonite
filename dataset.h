@@ -23,6 +23,7 @@ public:
     shared_ptr<double[]> median{nullptr};
     shared_ptr<double[]> typical{nullptr};
     shared_ptr<double[]> weighted{nullptr};
+    shared_ptr<double[]> zero{nullptr};
 
     Dataset() = delete;
     Dataset(int num_bars, int *timestamp, double *open, double *high, double *low, double *close, double *volume);
