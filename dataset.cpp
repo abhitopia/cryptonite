@@ -6,6 +6,7 @@
 #include "lib/csv/csv.h"
 #include "lib/date/date.h"
 
+
 using namespace io;
 using namespace std;
 using namespace date;
@@ -68,5 +69,8 @@ Dataset::Dataset(int num_bars, int* timestamp, double* open, double* high,
     this->low.reset(low);
     this->close.reset(close);
     this->volume.reset(volume);
+    this->median = CIndicator::medprice(num_bars, {this->high, this->low})[0];
+    this->typical = CIndicator::typprice(num_bars, {this->high, this->low, this->close})[0];
+    this->weighted = CIndicator::wcprice(num_bars, {this->high, this->low, this->close})[0];
 }
 

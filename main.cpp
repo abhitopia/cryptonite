@@ -1,9 +1,17 @@
 #include <iostream>
 #include <omp.h>
 #include "dataset.h"
+#include "indicator.h"
+#include <chrono>
+#include "function.h"
+#include "random.h"
+
+using namespace std;
+using namespace std::chrono;
 
 
 void openMP() {
+    double start_time = omp_get_wtime();
     int i;
     int threadID = 0;
     #pragma omp parallel for private(i, threadID)
@@ -16,12 +24,63 @@ void openMP() {
             printf("Thread %d reporting\n", threadID);
         }
     }
+
+    double time = omp_get_wtime() - start_time;
+    cout << time << endl;
+
 }
 
+
 int main() {
+//    RandomGenerator gen{};
+//    _Random->seed(42);
+    cryptonite::seed();
+
+//#pragma omp parallel for
+//    for(int i=0; i < 100; i++){
+//        cout << "Generated: " << randn() << endl;
+//    }
+
     Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
-    std::cout << dataset.open[0] << dataset.open[1] <<endl;
-    std::string hello = "Hello World!";
-    openMP();
+
+    auto result = CIndicator::abs(dataset.num_bars, {dataset.typical});
+
+    Alligator ind{};
+    IndicatorConfig config = ind.generate_config(1.0);
+//    for(int i=0; i< 100; i++) {
+//        cout << cryptonite::randint(0, 2) << endl;
+//    }
+    auto result1 = ind.compute(dataset, config);
+    ind.permute_level(dataset.num_bars, config, result1);
+//    cout << result1["value"][0] << endl;
+//    unique_ptr<bool[]> result{std::move(rises(dataset.num_bars, dataset.open, dataset.open))};
+
     return 0;
 }
+
+
+/*
+ * Generated: In Thread 0
+0.796543
+Generated: In Thread 0
+0.183435
+Generated: In Thread 0
+0.779691
+Generated: In Thread 0
+0.59685
+Generated: In Thread 0
+0.445833
+Generated: In Thread 0
+0.0999749
+Generated: In Thread 0
+0.459249
+Generated: In Thread 0
+0.333709
+Generated: In Thread 0
+0.142867
+Generated: In Thread 0
+0.650888
+8The number of members in trigger 8
+Process finished with exit code 0
+
+ */

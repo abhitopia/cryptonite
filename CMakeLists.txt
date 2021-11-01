@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(cryptonite LANGUAGES CXX)
 
 add_subdirectory(lib)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 
 set(CMAKE_C_COMPILER "gcc-11")
@@ -15,13 +15,15 @@ if (OPENMP_FOUND)
 endif()
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -lpthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -lpthread -std=c++17 -std=gnu++17")
 
 
 #add_subdirectory(lib)
 #add_subdirectory(lib/indicators)
 
-add_executable(cryptonite main.cpp dataset.cpp dataset.h lib/csv/csv.h lib/date/date.h lib/cli/CLI11.hpp indicator.cpp indicator.h rules.cpp rules.h)
+add_executable(cryptonite main.cpp dataset.cpp dataset.h lib/csv/csv.h lib/date/date.h  lib/date/date.h indicator.cpp indicator.h trigger.cpp trigger.h random.cpp random.h function.cpp function.h constants.cpp constants.h)
+target_link_libraries(cryptonite CIndicators)
+target_compile_features(cryptonite PRIVATE cxx_std_17)
 
 
 

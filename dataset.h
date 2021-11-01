@@ -7,18 +7,22 @@
 
 #include <string>
 #include <memory>
+#include "function.h"
 
 using namespace std;
 
 class Dataset {
 public:
     int num_bars{};
-    unique_ptr<int[]> timestamp{nullptr};
-    unique_ptr<double[]> open{nullptr};
-    unique_ptr<double[]> high{nullptr};
-    unique_ptr<double[]> low{nullptr};
-    unique_ptr<double[]> close{nullptr};
-    unique_ptr<double[]> volume{nullptr};
+    shared_ptr<int[]> timestamp{nullptr};
+    shared_ptr<double[]> open{nullptr};
+    shared_ptr<double[]> high{nullptr};
+    shared_ptr<double[]> low{nullptr};
+    shared_ptr<double[]> close{nullptr};
+    shared_ptr<double[]> volume{nullptr};
+    shared_ptr<double[]> median{nullptr};
+    shared_ptr<double[]> typical{nullptr};
+    shared_ptr<double[]> weighted{nullptr};
 
     Dataset() = delete;
     Dataset(int num_bars, int *timestamp, double *open, double *high, double *low, double *close, double *volume);
