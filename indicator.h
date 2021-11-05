@@ -52,6 +52,7 @@ public:
     void to_json();
     spda_t get_source(const Dataset &dataset, ApplyTo apply_to);
     spda_t apply_ma(int num_bars, double period, spda_t source, MAMethod ma_method);
+    virtual bool validate_config(IndicatorConfig &config);
 };
 
 class AcceleratorOscillator: public Indicator {
@@ -321,6 +322,8 @@ public:
 
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    bool validate_config(IndicatorConfig &config) override;
+
 };
 
 
@@ -337,6 +340,7 @@ public:
 
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    bool validate_config(IndicatorConfig &config) override;
 };
 
 
@@ -405,6 +409,8 @@ public:
         defaults["level"] = 0.0;
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    bool validate_config(IndicatorConfig &config) override;
+
 };
 
 

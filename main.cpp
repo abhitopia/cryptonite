@@ -30,11 +30,32 @@ void openMP() {
 
 }
 
+void testIndicators(){
+    int num_indicators = Indicators.size();
+    Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
+
+    shared_ptr<Indicator> indicator{nullptr};
+    IndicatorConfig config;
+    for(int i=0; i<num_indicators; i++){
+//        if (i!=19){
+//            continue;
+//        }
+        for (int j=0; j< 5000; j++){
+            cout << "Indicator Number: " << i << endl;
+            indicator = Indicators[i];
+            config = indicator->generate_config(0.5);
+            indicator->compute(dataset, config);
+        }
+    }
+}
+
 
 int main() {
 //    RandomGenerator gen{};
 //    _Random->seed(42);
     cryptonite::seed();
+
+    testIndicators();
 
 //#pragma omp parallel for
 //    for(int i=0; i < 100; i++){

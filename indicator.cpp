@@ -43,7 +43,10 @@ IndicatorConfig Indicator::generate_config(double exploration_prob) {
     IndicatorConfig config{&triggers[cryptonite::randint(triggers.size())],
                            get_random_params(exploration_prob),
                            this};
-    cout << "The number of members in trigger " << endl;
+
+    while( not validate_config(config)){
+        config.params = get_random_params(exploration_prob);
+    }
     config.print();
     return config;
 }
@@ -98,6 +101,10 @@ spda_t Indicator::apply_ma(int num_bars, double period, spda_t source, MAMethod 
         default:
             throw std::runtime_error("Unrecognized `ma_method`!");
     };
+}
+
+bool Indicator::validate_config(IndicatorConfig &config) {
+    return true;
 }
 
 spda_t shift(int num_bars, int offset, spda_t source, double fill_value) {
@@ -186,7 +193,7 @@ unordered_map<string, spda_t> AccumulationDistribution::compute(const Dataset &d
 }
 
 unordered_map<string, spda_t> ADX::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    unordered_map<string, spda_t> result{{"value", ad(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
+    unordered_map<string, spda_t> result{{"value", adx(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
     return result;
 }
 
@@ -213,14 +220,14 @@ unordered_map<string, spda_t> AverageTrueRange::compute(const Dataset &dataset, 
 }
 
 unordered_map<string, spda_t> BearsPower::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    auto ema = atr(dataset.num_bars, {dataset.close}, {config.params.at("period")})[0];
-    unordered_map<string, spda_t> result{{"value", sub(dataset.num_bars, {dataset.low, ema})[0]}};
+    auto ema_val = ema(dataset.num_bars, {dataset.close}, {config.params.at("period")})[0];
+    unordered_map<string, spda_t> result{{"value", sub(dataset.num_bars, {dataset.low, ema_val})[0]}};
     return result;
 }
 
 unordered_map<string, spda_t> BullsPower::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    auto ema = atr(dataset.num_bars, {dataset.close}, {config.params.at("period")})[0];
-    unordered_map<string, spda_t> result{{"value", sub(dataset.num_bars, {dataset.high, ema})[0]}};
+    auto ema_val = ema(dataset.num_bars, {dataset.close}, {config.params.at("period")})[0];
+    unordered_map<string, spda_t> result{{"value", sub(dataset.num_bars, {dataset.high, ema_val})[0]}};
     return result;
 }
 
@@ -309,6 +316,10 @@ unordered_map<string, spda_t> MACD::compute(const Dataset &dataset, const Indica
     return result;
 }
 
+bool MACD::validate_config(IndicatorConfig &config) {
+    return config.params["fast_period"] < config.params["slow_period"];
+}
+
 unordered_map<string, spda_t> MACDSignal::compute(const Dataset &dataset, const IndicatorConfig &config) {
     int num_bars = dataset.num_bars;
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
@@ -318,6 +329,10 @@ unordered_map<string, spda_t> MACDSignal::compute(const Dataset &dataset, const 
     auto macd_ind = macd(num_bars, {source}, {fast_period, slow_period, signal_period});
     unordered_map<string, spda_t> result{{"macd", macd_ind[0]}, {"signal", macd_ind[1]}};
     return result;
+}
+
+bool MACDSignal::validate_config(IndicatorConfig &config) {
+    return config.params["fast_period"] < config.params["slow_period"];
 }
 
 unordered_map<string, spda_t> Momentum::compute(const Dataset &dataset, const IndicatorConfig &config) {
@@ -351,6 +366,10 @@ unordered_map<string, spda_t> MovingAverageOscillator::compute(const Dataset &da
     auto osma = sub(num_bars, {macd_ind[0], macd_ind[1]})[0];
     unordered_map<string, spda_t> result{{"value", osma}};
     return result;
+}
+
+bool MovingAverageOscillator::validate_config(IndicatorConfig &config) {
+    return config.params["fast_period"] < config.params["slow_period"];
 }
 
 unordered_map<string, spda_t> MovingAverageCrossOver::compute(const Dataset &dataset, const IndicatorConfig &config) {
