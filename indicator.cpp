@@ -17,23 +17,26 @@ int sample_gaussian_int(double mean, double sigma, int min, int max) {
 
 
 void Indicator::to_json() {
-    std::cout << "Indicator: " << name << endl;
+    std::cout << "Indicator: " << name << " " << min_level << endl;
 }
 
 unordered_map<string, double> Indicator::get_random_params(double exploration_prob) {
     unordered_map<string, double> params;
+    cout << "Indicator:" << name << " Min Level " << min_level << endl;
     for (auto const& [key, val] : defaults)
     {
-        if (key == "level" || cryptonite::rand() > exploration_prob){ // level or don't explore
+        cout << key << " " << val << endl;
+        if (cryptonite::rand() > exploration_prob){ // level or don't explore
             params[key] = val;
         } else if (key == "apply_to"){
             params[key] = cryptonite::randint(0, 7);
         } else if (key == "ma_method"){
             params[key] = cryptonite::randint(0, 4);
-        }
-        else {
+        } else if(key == "level"){
+//            assert(not std::isnan(min_level));
+            params["level"] = cryptonite::rand(min_level, max_level);
+        } else {
             params[key] = sample_gaussian_int(val, sample_std,2, val + sample_offset);
-
         }
     }
     return params;
@@ -51,21 +54,6 @@ IndicatorConfig Indicator::generate_config(double exploration_prob) {
     return config;
 }
 
-void Indicator::permute_level(int num_bars, IndicatorConfig &config, unordered_map<string, spda_t> &indicator_output) {
-    if(config.trigger->has_level()){
-        spda_t output{indicator_output[config.trigger->getComparand()]};
-        double output_min{dMax}, output_max{dMin};
-        for(int i=0; i < num_bars; i++){
-            if(output[i] != output[i]){
-                continue;  // Pass over NaNs;
-            }
-            output_min = std::min(output_min, output[i]);
-            output_max = std::max(output_max, output[i]);
-        }
-
-        config.params["level"] = cryptonite::rand(output_min, output_max);
-    }
-}
 
 spda_t Indicator::get_source(const Dataset &dataset, ApplyTo apply_to) {
     switch(apply_to){
@@ -105,6 +93,11 @@ spda_t Indicator::apply_ma(int num_bars, double period, spda_t source, MAMethod 
 
 bool Indicator::validate_config(IndicatorConfig &config) {
     return true;
+}
+
+void Indicator::set_level_range(double min_level, double max_level) {
+    this->min_level = min_level;
+    this->max_level = max_level;
 }
 
 spda_t shift(int num_bars, int offset, spda_t source, double fill_value) {
@@ -216,7 +209,7 @@ unordered_map<string, spda_t> Alligator::compute(const Dataset &dataset, const I
 
 unordered_map<string, spda_t> AverageTrueRange::compute(const Dataset &dataset, const IndicatorConfig &config) {
     unordered_map<string, spda_t> result{{"value", atr(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
-    return unordered_map<string, spda_t>();
+    return result;
 }
 
 unordered_map<string, spda_t> BearsPower::compute(const Dataset &dataset, const IndicatorConfig &config) {
@@ -605,3 +598,31 @@ vector<std::shared_ptr<Indicator>> Indicators{
         std::make_unique<CandleColor>(),
         std::make_unique<PinBar>()
 };
+
+void setup(const Dataset &dataset, int seed) {
+    cryptonite::seed(seed);
+    int num_bars = dataset.num_bars;
+    int num_indicators = Indicators.size();
+    shared_ptr<Indicator> indicator{nullptr};
+    IndicatorConfig config;
+    for(int i=0; i<num_indicators; i++){
+        indicator = Indicators[i];
+        config = indicator->generate_config(0.0);
+        if(indicator->has_level()){
+            while(not config.trigger->has_level()){
+                config = indicator->generate_config(0.0);
+            }
+            auto indicator_output = indicator->compute(dataset, config);
+            spda_t output{indicator_output[config.trigger->getComparand()]};
+            double output_min{dMax}, output_max{dMin};
+            for(int i=0; i < num_bars; i++){
+                if(std::isnan(output[i])){
+                    continue;  // Pass over NaNs;
+                }
+                output_min = std::min(output_min, output[i]);
+                output_max = std::max(output_max, output[i]);
+            }
+            indicator->set_level_range(output_min, output_max);
+        }
+    }
+}

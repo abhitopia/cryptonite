@@ -10,10 +10,13 @@
 #include <unordered_map>
 #include <vector>
 #include "trigger.h"
+#include <limits>;
+
 #include "random.h"
 #include "dataset.h"
 #include "function.h"
 #include "constants.h"
+#include <math.h>
 #include <limits>
 
 
@@ -44,26 +47,38 @@ protected:
     string name{};
     unordered_map<string, double> defaults{};
     vector<Trigger> triggers{};
+    double min_level{dNaN};
+    double max_level{dNaN};
+
 public:
     virtual unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) = 0;
     IndicatorConfig generate_config(double exploration_prob=0.5);
     unordered_map<string, double> get_random_params(double exploration_prob=0.5);
-    void permute_level(int num_bars, IndicatorConfig &config, unordered_map<string, spda_t> &indicator_output);
     void to_json();
     spda_t get_source(const Dataset &dataset, ApplyTo apply_to);
     spda_t apply_ma(int num_bars, double period, spda_t source, MAMethod ma_method);
     virtual bool validate_config(IndicatorConfig &config);
+    void set_level_range(double min_level, double max_level);
+    bool has_level() {
+        for(int j=0; j<triggers.size(); j++){
+            if (triggers[j].has_level()){
+                return true;
+            }
+        }
+        return false;
+    }
 };
 
 class AcceleratorOscillator: public Indicator {
 public:
-    AcceleratorOscillator(){
+    AcceleratorOscillator() {
         name="AcceleratorOscillator";
         triggers = riseFallTriggers("value") +
             higherLowerThanTriggers("value", "level") +
             crossingTriggers("value", "level") +
             directionChangeTriggers("value");
         defaults["level"] =  0.0;
+
     };
 
 //    void check_sma(int num_bars, spda_t target, spda_t data, int num_nan, int period){
@@ -269,6 +284,7 @@ public:
                    vector<Trigger>{HigherThan{"bar", "upper"}, LowerThan{"bar", "lower"}};
 
         defaults["period"] =  10;
+        
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -337,7 +353,6 @@ public:
         defaults["slow_period"] = 26;
         defaults["signal_period"] = 9;
         defaults["apply_to"] = ApplyTo::CLOSE;
-
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
     bool validate_config(IndicatorConfig &config) override;
@@ -371,7 +386,6 @@ public:
                    directionChangeTriggers("value");
         defaults["period"] = 14.0;
         defaults["level"] = 20.0;
-
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -389,6 +403,7 @@ public:
         defaults["shift"] = 0.0;
         defaults["ma_method"] = MAMethod::SMA;
         defaults["apply_to"] = ApplyTo::CLOSE;
+        
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -450,6 +465,7 @@ public:
         defaults["period"] = 14;
         defaults["apply_to"] = ApplyTo::CLOSE;
         defaults["level"] = 30.0;
+        
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -465,6 +481,7 @@ public:
                    directionChangeTriggers("value");
         defaults["period"] = 10;
         defaults["level"] = 0.0;
+
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -477,6 +494,7 @@ public:
         triggers = higherLowerThanTriggers("rvi", "signal") +
                    crossingTriggers("rvi", "signal");
         defaults["period"] = 10;
+
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -493,6 +511,7 @@ public:
         defaults["period"] = 20;
         defaults["level"] = 0.0;
         defaults["apply_to"] = ApplyTo::CLOSE;
+
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -510,6 +529,7 @@ public:
         defaults["pct_k_slowing_period"] = 3;
         defaults["pct_d_period"] = 3;
         defaults["level"] = 20;
+
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -524,6 +544,7 @@ public:
         defaults["pct_k_period"] = 5;
         defaults["pct_k_slowing_period"] = 3;
         defaults["pct_d_period"] = 3;
+        
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -538,6 +559,7 @@ public:
                    crossingTriggers("value", "level") +
                    directionChangeTriggers("value");
         defaults["level"] = 1000;
+        
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -553,6 +575,7 @@ public:
                    directionChangeTriggers("value");
         defaults["level"] = -20;
         defaults["period"] = 14;
+
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -565,6 +588,7 @@ public:
         triggers = higherLowerThanTriggers("value", "zero");
         defaults["min_change_pct"] = 1.0;
         defaults["consecutive_period"] = 2;
+
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
@@ -577,10 +601,14 @@ public:
         triggers = higherLowerThanTriggers("value", "zero");
         defaults["max_body_pct"] = 8.0;
         defaults["min_wick_pct"] = 30.0;
+
     }
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 extern vector<std::shared_ptr<Indicator>> Indicators;
+
+
+void setup(const Dataset &dataset, int seed=-1);
 
 #endif //CRYPTONITE_INDICATOR_H

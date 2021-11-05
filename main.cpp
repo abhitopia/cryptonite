@@ -34,14 +34,15 @@ void testIndicators(){
     int num_indicators = Indicators.size();
     Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
 
+    bool test = dNaN == dNaN;
+    cout << test;
+    setup(dataset);
+
     shared_ptr<Indicator> indicator{nullptr};
     IndicatorConfig config;
     for(int i=0; i<num_indicators; i++){
-//        if (i!=19){
-//            continue;
-//        }
-        for (int j=0; j< 5000; j++){
-            cout << "Indicator Number: " << i << endl;
+        for (int j=0; j< 1000; j++){
+            cout << "Indicator Number: " << i;
             indicator = Indicators[i];
             config = indicator->generate_config(0.5);
             indicator->compute(dataset, config);
@@ -53,8 +54,6 @@ void testIndicators(){
 int main() {
 //    RandomGenerator gen{};
 //    _Random->seed(42);
-    cryptonite::seed();
-
     testIndicators();
 
 //#pragma omp parallel for
@@ -72,7 +71,6 @@ int main() {
 //        cout << cryptonite::randint(0, 2) << endl;
 //    }
     auto result1 = ind.compute(dataset, config);
-    ind.permute_level(dataset.num_bars, config, result1);
 //    cout << result1["value"][0] << endl;
 //    unique_ptr<bool[]> result{std::move(rises(dataset.num_bars, dataset.open, dataset.open))};
 

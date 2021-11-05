@@ -30,7 +30,7 @@ namespace CIndicator{
         for(auto input: inputs){
             int num_nan{0};
             for (int j = 0; j < input_len; j++) {
-                if (input[j] != input[j]) {
+                if (std::isnan(input[j])) {
                     num_nan += 1;
                 } else {
                     break;
