@@ -40,8 +40,8 @@ void testIndicators(){
     auto j = config.toJson();
     std::cout << std::setw(4) << j << std::endl;
 
-
     Strategy strategy = Strategy::generate(config);
+    std::cout << std::setw(4) << strategy.toJson() << std::endl;
 
 //    backtest(strategy, dataset);
 //    int i = 1;

@@ -91,6 +91,14 @@ EntryCriteria EntryCriteria::generate(int num_indicators, double exploration_pro
     return EntryCriteria(Criteria::generate_configs(num_indicators, exploration_prob));
 }
 
+json Criteria::toJson() {
+    json j;
+    for (auto &config: configs){
+        j.push_back(config.toJson());
+    }
+    return j;
+}
+
 shared_ptr<bool[]> ExitCriteria::reduce(int num_bars, const vector<shared_ptr<bool[]>> &trig_outputs) {
     shared_ptr<bool[]> result{new bool [num_bars]};
     for (int bar=0; bar < num_bars; bar++){
@@ -105,6 +113,7 @@ shared_ptr<bool[]> ExitCriteria::reduce(int num_bars, const vector<shared_ptr<bo
 ExitCriteria ExitCriteria::generate(int num_indicators, double exploration_prob) {
     return ExitCriteria(Criteria::generate_configs(num_indicators, exploration_prob));
 }
+
 
 json StrategyGenConfig::toJson() {
     json j;
@@ -136,4 +145,14 @@ string slTypeToString(SLType sl_type) {
         case TRAILING: return "TRAILING";
         case ANY: return "ANY";
     }
+}
+
+json Strategy::toJson() {
+    json j;
+    j["tp"] = tp;
+    j["sl"] = sl;
+    j["trailing_sl"] = trailing_sl;
+    j["entryCriteria"] = entryCriteria.toJson();
+    j["exitCriteria"] = exitCriteria.toJson();
+    return j;
 }

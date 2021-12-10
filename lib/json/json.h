@@ -3511,7 +3511,7 @@ namespace detail
 // (i.e. those of the form: decltype(T::member_function(std::declval<T>())))
 //
 // In this case, T has to be properly CV-qualified to constraint the function arguments
-// (e.g. to_json(BasicJsonType&, const T&))
+// (e.g. toJson(BasicJsonType&, const T&))
 
 template<typename> struct is_basic_json : std::false_type {};
 
@@ -3604,7 +3604,7 @@ is_detected_exact<T, from_json_function, serializer,
 const BasicJsonType&>::value;
 };
 
-// This trait checks if BasicJsonType::json_serializer<T>::to_json exists
+// This trait checks if BasicJsonType::json_serializer<T>::toJson exists
 // Do not evaluate the trait when T is a basic_json type, to avoid template instantiation infinite recursion.
 template<typename BasicJsonType, typename T, typename = void>
 struct has_to_json : std::false_type {};
@@ -4412,7 +4412,7 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 } // namespace
 } // namespace nlohmann
 
-// #include <nlohmann/detail/conversions/to_json.hpp>
+// #include <nlohmann/detail/conversions/toJson.hpp>
 
 
 #include <algorithm> // copy
@@ -4863,7 +4863,7 @@ j.assert_invariant();
 };
 
 /////////////
-// to_json //
+// toJson //
 /////////////
 
 template<typename BasicJsonType, typename T,
@@ -5021,7 +5021,7 @@ return to_json(j, std::forward<T>(val));
 };
 }  // namespace detail
 
-/// namespace to hold default `to_json` function
+/// namespace to hold default `toJson` function
 /// to see why this is required:
 /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
 namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
@@ -5272,7 +5272,7 @@ bool m_has_subtype = false;
 
 // #include <nlohmann/detail/conversions/from_json.hpp>
 
-// #include <nlohmann/detail/conversions/to_json.hpp>
+// #include <nlohmann/detail/conversions/toJson.hpp>
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -16259,7 +16259,7 @@ else
 auto k = static_cast<std::uint32_t>(e);
 if (k < 10)
 {
-// Always print at least two digits in the exponent.
+// Always toJson at least two digits in the exponent.
 // This is for compatibility with printf("%g").
 *buf++ = '0';
 *buf++ = static_cast<char>('0' + k);
@@ -17650,7 +17650,7 @@ serialization formats (`std::vector<std::uint8_t>` by default; will be used in
 @ref binary_t)
 @tparam AllocatorType type of the allocator to use (`std::allocator` by
 default)
-@tparam JSONSerializer the serializer to resolve internal calls to `to_json()`
+@tparam JSONSerializer the serializer to resolve internal calls to `toJson()`
 and `from_json()` (@ref adl_serializer by default)
 
 @requirement The class satisfies the following concept requirements:
@@ -19015,8 +19015,8 @@ assert_invariant();
     @brief create a JSON value
 
     This is a "catch all" constructor for all compatible JSON types; that is,
-    types for which a `to_json()` method exists. The constructor forwards the
-    parameter @a val to that method (to `json_serializer<U>::to_json` method
+    types for which a `toJson()` method exists. The constructor forwards the
+    parameter @a val to that method (to `json_serializer<U>::toJson` method
     with `U = uncvref_t<CompatibleType>`, to be exact).
 
     Template type @a CompatibleType includes, but is not limited to, the
@@ -19053,18 +19053,18 @@ assert_invariant();
     - @a CompatibleType is not a different @ref basic_json type (i.e. with different template arguments)
     - @a CompatibleType is not a @ref basic_json nested type (e.g.,
          @ref json_pointer, @ref iterator, etc ...)
-    - `json_serializer<U>` has a `to_json(basic_json_t&, CompatibleType&&)` method
+    - `json_serializer<U>` has a `toJson(basic_json_t&, CompatibleType&&)` method
 
     @tparam U = `uncvref_t<CompatibleType>`
 
     @param[in] val the value to be forwarded to the respective constructor
 
     @complexity Usually linear in the size of the passed @a val, also
-                depending on the implementation of the called `to_json()`
+                depending on the implementation of the called `toJson()`
                 method.
 
     @exceptionsafety Depends on the called constructor. For types directly
-    supported by the library (i.e., all types for which no `to_json()` function
+    supported by the library (i.e., all types for which no `toJson()` function
     was provided), strong guarantee holds: if an exception is thrown, there are
     no changes to any JSON value.
 
@@ -19102,11 +19102,11 @@ assert_invariant();
     @param[in] val the @ref basic_json value to be converted.
 
     @complexity Usually linear in the size of the passed @a val, also
-                depending on the implementation of the called `to_json()`
+                depending on the implementation of the called `toJson()`
                 method.
 
     @exceptionsafety Depends on the called constructor. For types directly
-    supported by the library (i.e., all types for which no `to_json()` function
+    supported by the library (i.e., all types for which no `toJson()` function
     was provided), strong guarantee holds: if an exception is thrown, there are
     no changes to any JSON value.
 

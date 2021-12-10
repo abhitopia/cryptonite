@@ -69,6 +69,7 @@ struct Criteria {
     shared_ptr<bool[]> apply(const Dataset &dataset, bool contra=false);
 
     static vector<IndicatorConfig> generate_configs(int num_indicators, double exploration_prob=0.5);
+    json toJson();
 };
 
 struct EntryCriteria : Criteria {
@@ -78,9 +79,7 @@ struct EntryCriteria : Criteria {
 
     static EntryCriteria generate(int num_indicators, double exploration_prob=0.5);
 
-    void toJson(){
-
-    }
+//    json toJson();
 };
 
 struct ExitCriteria : Criteria {
@@ -89,6 +88,8 @@ struct ExitCriteria : Criteria {
     shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) override;
 
     static ExitCriteria generate(int num_indicators, double exploration_prob=0.5);
+//    json toJson();
+
 };
 
 struct CriteriaGenConfig {
@@ -132,6 +133,8 @@ struct Strategy {
 
         return Strategy(tp, sl, trailing_sl, entry_criteria, exit_criteria);
     }
+
+    json toJson();
 };
 
 

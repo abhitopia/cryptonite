@@ -16,8 +16,10 @@ int sample_gaussian_int(double mean, double sigma, int min, int max) {
 }
 
 
-void Indicator::to_json() {
-//    std::cout << "Indicator: " << name << " " << min_level << endl;
+json Indicator::toJson() {
+    json j;
+    j["name"] = name;
+    return j;
 }
 
 unordered_map<string, double> Indicator::get_random_params(double exploration_prob) {
@@ -50,7 +52,7 @@ IndicatorConfig Indicator::generate_config(double exploration_prob) {
     while( not validate_config(config)){
         config.params = get_random_params(exploration_prob);
     }
-    config.print();
+    config.toJson();
     return config;
 }
 
@@ -155,12 +157,15 @@ spda_t rolling_sum(int num_bars, spda_t source, int period) {
     return result;
 }
 
-void IndicatorConfig::print() {
-//    trigger->to_json();
-//    for (auto const& [key, val] : params){
-//        cout << key << ": " << val << endl;
-//    }
-//    indicator->to_json();
+json IndicatorConfig::toJson() {
+    json j;
+    j["Indicator"] = indicator->toJson();
+    j["trigger"] = trigger->toJson();
+    for (auto const& [key, val] : params){
+        j["params"][key] = val;
+    }
+    return j;
+
 }
 
 shared_ptr<bool[]> IndicatorConfig::compute(const Dataset &dataset, bool contra_trigger) {

@@ -9,7 +9,9 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "lib/json/json.h"
 
+using json = nlohmann::json;
 using namespace std;
 
 typedef const std::shared_ptr<double[]> series_d;
@@ -32,9 +34,7 @@ public:
     bool has_level();
     string getComparand();
     string getComparator();
-    void to_json(){
-        std::cout << "Trigger: " << name << endl;
-    }
+    json toJson();
 };
 
 class Falls;

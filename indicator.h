@@ -18,6 +18,9 @@
 #include "constants.h"
 #include <math.h>
 #include <limits>
+#include "lib/json/json.h"
+
+using json = nlohmann::json;
 
 
 typedef shared_ptr<double[]> spda_t;
@@ -35,7 +38,7 @@ struct IndicatorConfig{
         this->indicator = indicator;
         this->params = params;
     }
-    void print();
+    json toJson();
     shared_ptr<bool[]> compute(const Dataset &dataset, bool contra_trigger = false);
 };
 
@@ -62,7 +65,7 @@ public:
     virtual unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) = 0;
     IndicatorConfig generate_config(double exploration_prob=0.5);
     unordered_map<string, double> get_random_params(double exploration_prob=0.5);
-    void to_json();
+    json toJson();
     spda_t get_source(const Dataset &dataset, ApplyTo apply_to);
     spda_t apply_ma(int num_bars, double period, spda_t source, MAMethod ma_method);
     virtual bool validate_config(IndicatorConfig &config);

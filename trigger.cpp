@@ -198,3 +198,11 @@ string Trigger::getComparand() {
 string Trigger::getComparator() {
     return _comparator;
 }
+
+json Trigger::toJson() {
+    json j;
+    j["name"] = name;
+    j["comparand"] = _comparand;
+    j["comparator"] = _comparator;
+    return j;
+}
