@@ -4,7 +4,9 @@
 #include "indicator.h"
 #include <chrono>
 #include "function.h"
+#include "strategy.h"
 #include "random.h"
+#include "backtest.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -31,23 +33,33 @@ void openMP() {
 }
 
 void testIndicators(){
-    int num_indicators = Indicators.size();
+//    int num_indicators = Indicators.size();
     Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
-
-    bool test = dNaN == dNaN;
-    cout << test;
     setup(dataset);
+    StrategyGenConfig config;
+    auto j = config.toJson();
+    std::cout << std::setw(4) << j << std::endl;
 
-    shared_ptr<Indicator> indicator{nullptr};
-    IndicatorConfig config;
-    for(int i=0; i<num_indicators; i++){
-        for (int j=0; j< 1000; j++){
-            cout << "Indicator Number: " << i;
-            indicator = Indicators[i];
-            config = indicator->generate_config(0.5);
-            indicator->compute(dataset, config);
-        }
-    }
+
+    Strategy strategy = Strategy::generate(config);
+
+//    backtest(strategy, dataset);
+//    int i = 1;
+
+//    bool test = dNaN == dNaN;
+//    cout << test;
+//    setup(dataset);
+//
+//    shared_ptr<Indicator> indicator{nullptr};
+//    IndicatorConfig config();
+//    for(int i=0; i<num_indicators; i++){
+//        for (int j=0; j< 1000; j++){
+//            cout << "Indicator Number: " << i;
+//            indicator = Indicators[i];
+//            config = indicator->generate_config(0.5);
+//            indicator->compute(dataset, config);
+//        }
+//    }
 }
 
 
@@ -61,16 +73,16 @@ int main() {
 //        cout << "Generated: " << randn() << endl;
 //    }
 
-    Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
+//    Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
 
-    auto result = CIndicator::abs(dataset.num_bars, {dataset.typical});
+//    auto result = CIndicator::abs(dataset.num_bars, {dataset.typical});
 
-    Alligator ind{};
-    IndicatorConfig config = ind.generate_config(1.0);
+//    Alligator ind{};
+//    IndicatorConfig config = ind.generate_config(1.0);
 //    for(int i=0; i< 100; i++) {
 //        cout << cryptonite::randint(0, 2) << endl;
 //    }
-    auto result1 = ind.compute(dataset, config);
+//    auto result1 = ind.compute(dataset, config);
 //    cout << result1["value"][0] << endl;
 //    unique_ptr<bool[]> result{std::move(rises(dataset.num_bars, dataset.open, dataset.open))};
 

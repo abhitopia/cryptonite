@@ -5,7 +5,7 @@
 #include "trigger.h"
 using namespace std;
 
-series_b Rises::operator()(const int &len, series_d &comparand) {
+series_b Rises::compute(const int &len, series_d &comparand) {
     series_b result{new bool[len]};
     result[0] = false;
     for(int i=1; i < len; i++){
@@ -14,11 +14,11 @@ series_b Rises::operator()(const int &len, series_d &comparand) {
     return result;
 }
 
-Falls Rises::get_contra() {
-    return Falls(_comparand);
+shared_ptr<Trigger> Rises::get_contra() {
+    return shared_ptr<Trigger>{new Falls(_comparand)};
 }
 
-series_b Falls::operator()(const int &len, series_d &comparand) {
+series_b Falls::compute(const int &len, series_d &comparand) {
     series_b  result{new bool[len]};
     result[0] = false;
 
@@ -28,12 +28,12 @@ series_b Falls::operator()(const int &len, series_d &comparand) {
     return result;
 }
 
-Rises Falls::get_contra() {
-    return Rises(_comparand);
+shared_ptr<Trigger> Falls::get_contra() {
+    return shared_ptr<Trigger>{new Rises(_comparand)};
 }
 
 
-series_b ChangesDirectionUpward::operator()(const int &len, series_d &comparand) {
+series_b ChangesDirectionUpward::compute(const int &len, series_d &comparand) {
     series_b  result{new bool[len]};
     result[0] = false;
     result[1] = false;
@@ -44,11 +44,11 @@ series_b ChangesDirectionUpward::operator()(const int &len, series_d &comparand)
     return result;
 }
 
-ChangesDirectionDownward ChangesDirectionUpward::get_contra() {
-    return ChangesDirectionDownward(_comparand);
+shared_ptr<Trigger> ChangesDirectionUpward::get_contra() {
+    return shared_ptr<Trigger>{new ChangesDirectionDownward(_comparand)};
 }
 
-series_b ChangesDirectionDownward::operator()(const int &len, series_d &comparand) {
+series_b ChangesDirectionDownward::compute(const int &len, series_d &comparand) {
     series_b  result{new bool[len]};
     result[0] = false;
     result[1] = false;
@@ -59,11 +59,11 @@ series_b ChangesDirectionDownward::operator()(const int &len, series_d &comparan
     return result;
 }
 
-ChangesDirectionUpward ChangesDirectionDownward::get_contra() {
-    return ChangesDirectionUpward(_comparand);
+shared_ptr<Trigger> ChangesDirectionDownward::get_contra() {
+    return shared_ptr<Trigger>{new ChangesDirectionUpward(_comparand)};
 }
 
-series_b HigherThan::operator()(const int &len, series_d &comparand, series_d &comparator) {
+series_b HigherThan::compute(const int &len, series_d &comparand, series_d &comparator) {
     series_b  result{new bool[len]};
 
     for(int i=0; i < len; i++){
@@ -72,7 +72,7 @@ series_b HigherThan::operator()(const int &len, series_d &comparand, series_d &c
     return result;
 }
 
-series_b HigherThan::operator()(const int &len, series_d &comparand, double &comparator) {
+series_b HigherThan::compute(const int &len, series_d &comparand, double &comparator) {
     series_b  result{new bool[len]};
 
     for(int i=0; i < len; i++){
@@ -81,11 +81,11 @@ series_b HigherThan::operator()(const int &len, series_d &comparand, double &com
     return result;
 }
 
-LowerThan HigherThan::get_contra() {
-    return LowerThan(_comparand, _comparator);
+shared_ptr<Trigger> HigherThan::get_contra() {
+    return shared_ptr<Trigger>{new LowerThan(_comparand, _comparator)};
 }
 
-series_b LowerThan::operator()(const int &len, series_d &comparand, double &comparator) {
+series_b LowerThan::compute(const int &len, series_d &comparand, double &comparator) {
     series_b  result{new bool[len]};
 
     for(int i=0; i < len; i++){
@@ -94,7 +94,7 @@ series_b LowerThan::operator()(const int &len, series_d &comparand, double &comp
     return result;
 }
 
-series_b LowerThan::operator()(const int &len, series_d &comparand, series_d &comparator) {
+series_b LowerThan::compute(const int &len, series_d &comparand, series_d &comparator) {
     series_b  result{new bool[len]};
 
     for(int i=0; i < len; i++){
@@ -103,11 +103,11 @@ series_b LowerThan::operator()(const int &len, series_d &comparand, series_d &co
     return result;
 }
 
-HigherThan LowerThan::get_contra() {
-    return HigherThan(_comparand, _comparator);
+shared_ptr<Trigger> LowerThan::get_contra() {
+    return shared_ptr<Trigger>{new HigherThan(_comparand, _comparator)};
 }
 
-series_b CrossesUpward::operator()(const int &len, series_d &comparand, series_d &comparator) {
+series_b CrossesUpward::compute(const int &len, series_d &comparand, series_d &comparator) {
     series_b  result{new bool[len]};
     result[0] = false;
     for(int i=1; i < len; i++){
@@ -116,7 +116,7 @@ series_b CrossesUpward::operator()(const int &len, series_d &comparand, series_d
     return result;
 }
 
-series_b CrossesUpward::operator()(const int &len, series_d &comparand, double &comparator) {
+series_b CrossesUpward::compute(const int &len, series_d &comparand, double &comparator) {
     series_b  result{new bool[len]};
     result[0] = false;
     for(int i=1; i < len; i++){
@@ -125,12 +125,12 @@ series_b CrossesUpward::operator()(const int &len, series_d &comparand, double &
     return result;
 }
 
-CrossesDownward CrossesUpward::get_contra() {
-    return CrossesDownward(_comparand, _comparator);
+shared_ptr<Trigger> CrossesUpward::get_contra() {
+    return shared_ptr<Trigger>{new CrossesDownward(_comparand, _comparator)};
 }
 
 
-series_b CrossesDownward::operator()(const int &len, series_d &comparand, series_d &comparator) {
+series_b CrossesDownward::compute(const int &len, series_d &comparand, series_d &comparator) {
     series_b  result{new bool[len]};
     result[0] = false;
     for(int i=1; i < len; i++){
@@ -139,7 +139,7 @@ series_b CrossesDownward::operator()(const int &len, series_d &comparand, series
     return result;
 }
 
-series_b CrossesDownward::operator()(const int &len, series_d &comparand, double &comparator) {
+series_b CrossesDownward::compute(const int &len, series_d &comparand, double &comparator) {
     series_b  result{new bool[len]};
     result[0] = false;
     for(int i=1; i < len; i++){
@@ -148,26 +148,29 @@ series_b CrossesDownward::operator()(const int &len, series_d &comparand, double
     return result;
 }
 
-CrossesUpward CrossesDownward::get_contra() {
-    return CrossesUpward(_comparand, _comparator);
+shared_ptr<Trigger> CrossesDownward::get_contra() {
+    return shared_ptr<Trigger>{new CrossesUpward(_comparand, _comparator)};
 }
 
 
 vector<Trigger> higherLowerThanTriggers(string comparand, string comparator) {
     HigherThan trigger(comparand, comparator);
-    vector<Trigger> result = {trigger, trigger.get_contra()};
+    LowerThan ctrigger(comparand, comparator);
+    vector<Trigger> result{trigger, ctrigger};
     return result;
 }
 
 vector<Trigger> riseFallTriggers(string comparand) {
     Rises trigger(comparand);
-    vector<Trigger> result = {trigger, trigger.get_contra()};
+    Falls ctrigger(comparand);
+    vector<Trigger> result{trigger, ctrigger};
     return result;
 }
 
 vector<Trigger> directionChangeTriggers(string comparand) {
     ChangesDirectionUpward trigger(comparand);
-    vector<Trigger> result = {trigger, trigger.get_contra()};
+    ChangesDirectionDownward ctrigger(comparand);
+    vector<Trigger> result{trigger, ctrigger};
     return result;
 }
 
@@ -179,7 +182,8 @@ std::vector<Trigger> operator+(const vector<Trigger> &v1, const vector<Trigger> 
 
 vector<Trigger> crossingTriggers(string comparand, string comparator) {
     CrossesUpward trigger(comparand, comparator);
-    vector<Trigger> result = {trigger, trigger.get_contra()};
+    CrossesDownward ctrigger(comparand, comparator);
+    vector<Trigger> result{trigger, ctrigger};
     return result;
 }
 
@@ -189,4 +193,8 @@ bool Trigger::has_level() {
 
 string Trigger::getComparand() {
     return _comparand;
+}
+
+string Trigger::getComparator() {
+    return _comparator;
 }

@@ -17,15 +17,15 @@ int sample_gaussian_int(double mean, double sigma, int min, int max) {
 
 
 void Indicator::to_json() {
-    std::cout << "Indicator: " << name << " " << min_level << endl;
+//    std::cout << "Indicator: " << name << " " << min_level << endl;
 }
 
 unordered_map<string, double> Indicator::get_random_params(double exploration_prob) {
     unordered_map<string, double> params;
-    cout << "Indicator:" << name << " Min Level " << min_level << endl;
+//    cout << "Indicator:" << name << " Min Level " << min_level << endl;
     for (auto const& [key, val] : defaults)
     {
-        cout << key << " " << val << endl;
+//        cout << key << " " << val << endl;
         if (cryptonite::rand() > exploration_prob){ // level or don't explore
             params[key] = val;
         } else if (key == "apply_to"){
@@ -156,26 +156,37 @@ spda_t rolling_sum(int num_bars, spda_t source, int period) {
 }
 
 void IndicatorConfig::print() {
-    trigger->to_json();
-    for (auto const& [key, val] : params){
-        cout << key << ": " << val << endl;
+//    trigger->to_json();
+//    for (auto const& [key, val] : params){
+//        cout << key << ": " << val << endl;
+//    }
+//    indicator->to_json();
+}
+
+shared_ptr<bool[]> IndicatorConfig::compute(const Dataset &dataset, bool contra_trigger) {
+    int num_bars = dataset.num_bars;
+    unordered_map<string, shared_ptr<double[]>> output = this->indicator->compute(dataset, *this);
+    Trigger *trigger = this-> trigger;
+    if (contra_trigger){
+          trigger = trigger->get_contra().get();
     }
-    indicator->to_json();
+
+    shared_ptr<bool[]> result{nullptr};
+    string comparator = this->trigger->getComparator();
+    if (comparator == ""){
+        result.reset(this->trigger->compute(num_bars, output[this->trigger->getComparand()]).get());
+    } else if (comparator == "level"){
+        result.reset(this->trigger->compute(num_bars, output[this->trigger->getComparand()], params["level"]).get());
+    } else {
+        auto res = this->trigger->compute(num_bars, output[this->trigger->getComparand()], output[comparator]);
+        result.reset(res.get());
+    }
+    return result;
 }
 
 unordered_map<string, spda_t> AcceleratorOscillator::compute(const Dataset &dataset, const IndicatorConfig &config) {
-//        auto a = sma(dataset.num_bars, {dataset.median}, {5.0})[0];
-//        auto b = sma(dataset.num_bars, {dataset.median}, {34.0})[0];
-
-//        check_sma(dataset.num_bars, a, dataset.median, 4, 5);
-//        check_sma(dataset.num_bars, b, dataset.median, 33, 34);
-
     spda_t ao = sub(dataset.num_bars, {sma(dataset.num_bars, {dataset.median}, {5.0})[0], sma(dataset.num_bars, {dataset.median}, {34.0})[0]})[0];
-//        check_sub(dataset.num_bars, ao, a, b, 33);
-//        auto c = sma(dataset.num_bars, {ao}, {5.0})[0];
-//        check_sma(dataset.num_bars, c, ao, 37, 5);
     spda_t ac = sub(dataset.num_bars, {ao, sma(dataset.num_bars, {ao}, {5.0})[0]})[0];
-//        check_sub(dataset.num_bars, ac, ao, c, 37);
     unordered_map<string, spda_t> result{{"value", ac}};
     return result;
 }
@@ -603,11 +614,9 @@ void setup(const Dataset &dataset, int seed) {
     cryptonite::seed(seed);
     int num_bars = dataset.num_bars;
     int num_indicators = Indicators.size();
-    shared_ptr<Indicator> indicator{nullptr};
-    IndicatorConfig config;
     for(int i=0; i<num_indicators; i++){
-        indicator = Indicators[i];
-        config = indicator->generate_config(0.0);
+        shared_ptr<Indicator> indicator = Indicators[i];
+        IndicatorConfig config = indicator->generate_config(0.0);
         if(indicator->has_level()){
             while(not config.trigger->has_level()){
                 config = indicator->generate_config(0.0);

@@ -25,10 +25,18 @@ using namespace CIndicator;
 class Indicator;
 
 struct IndicatorConfig{
-    Trigger *trigger{nullptr};
+    Trigger *trigger;
     unordered_map<string, double> params{};
-    Indicator *indicator{nullptr};
+    Indicator* indicator;
+
+    IndicatorConfig(){};
+    IndicatorConfig(Trigger *trigger, const unordered_map<string, double> &params, Indicator* indicator){
+        this->trigger = trigger;
+        this->indicator = indicator;
+        this->params = params;
+    }
     void print();
+    shared_ptr<bool[]> compute(const Dataset &dataset, bool contra_trigger = false);
 };
 
 enum MAMethod { WMA, EMA, SMA, SSMA};
@@ -80,39 +88,6 @@ public:
         defaults["level"] =  0.0;
 
     };
-
-//    void check_sma(int num_bars, spda_t target, spda_t data, int num_nan, int period){
-//        for(int i=0; i < num_bars; i++){
-//            if(i < num_nan){
-//                assert(target[i] != target[i]);
-//            } else {
-//                assert(target[i] == target[i]);
-//            }
-//        }
-//
-//        for(int i= num_nan; i < num_bars; i++){
-//            double sum_i = 0.0;
-//            for(int j=0; j < period; j++){
-//                sum_i += data[i-j];
-//            }
-//            sum_i /= period;
-//            cout << std::abs(target[i] - sum_i) << endl;
-//            assert(std::abs(target[i] - sum_i) < 0.000000001);
-//        }
-//    }
-//
-//    void check_sub(int num_bars, spda_t target, spda_t first, spda_t second, int num_nan){
-//        for(int i=0; i< num_bars; i++){
-//            if(i < num_nan){
-//                assert(target[i] != target[i]);
-//            } else {
-//                assert(target[i] == target[i]);
-//                double src = first[i] - second[i];
-//                assert(target[i] == src);
-//            }
-//
-//        }
-//    }
 
     unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 
