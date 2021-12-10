@@ -45,7 +45,7 @@ unordered_map<string, double> Indicator::get_random_params(double exploration_pr
 }
 
 IndicatorConfig Indicator::generate_config(double exploration_prob) {
-    IndicatorConfig config{&triggers[cryptonite::randint(triggers.size())],
+    IndicatorConfig config{triggers[cryptonite::randint(triggers.size())].get(),
                            get_random_params(exploration_prob),
                            this};
 
@@ -177,14 +177,15 @@ shared_ptr<bool[]> IndicatorConfig::compute(const Dataset &dataset, bool contra_
     }
 
     shared_ptr<bool[]> result{nullptr};
+    std::cout << std::setw(4) << this->trigger->toJson() << std::endl;
+
     string comparator = this->trigger->getComparator();
     if (comparator == ""){
-        result.reset(this->trigger->compute(num_bars, output[this->trigger->getComparand()]).get());
+        result = this->trigger->compute(num_bars, output[this->trigger->getComparand()]);
     } else if (comparator == "level"){
-        result.reset(this->trigger->compute(num_bars, output[this->trigger->getComparand()], params["level"]).get());
+        result = this->trigger->compute(num_bars, output[this->trigger->getComparand()], params["level"]);
     } else {
-        auto res = this->trigger->compute(num_bars, output[this->trigger->getComparand()], output[comparator]);
-        result.reset(res.get());
+        result = this->trigger->compute(num_bars, output[this->trigger->getComparand()], output[comparator]);
     }
     return result;
 }

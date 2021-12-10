@@ -33,7 +33,6 @@ void openMP() {
 }
 
 void testIndicators(){
-//    int num_indicators = Indicators.size();
     Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
     setup(dataset);
     StrategyGenConfig config;
@@ -43,7 +42,7 @@ void testIndicators(){
     Strategy strategy = Strategy::generate(config);
     std::cout << std::setw(4) << strategy.toJson() << std::endl;
 
-//    backtest(strategy, dataset);
+    backtest(strategy, dataset);
 //    int i = 1;
 
 //    bool test = dNaN == dNaN;

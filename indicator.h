@@ -57,7 +57,7 @@ class Indicator {
 protected:
     string name{};
     unordered_map<string, double> defaults{};
-    vector<Trigger> triggers{};
+    vector<shared_ptr<Trigger>> triggers{};
     double min_level{dNaN};
     double max_level{dNaN};
 
@@ -72,7 +72,7 @@ public:
     void set_level_range(double min_level, double max_level);
     bool has_level() {
         for(int j=0; j<triggers.size(); j++){
-            if (triggers[j].has_level()){
+            if (triggers[j]->has_level()){
                 return true;
             }
         }
@@ -200,7 +200,8 @@ public:
         name="BollingerBands";
         triggers = crossingTriggers("bar", "upper") +
                    crossingTriggers("bar", "lower") +
-                   vector<Trigger>{HigherThan{"bar", "upper"}, LowerThan{"bar", "lower"}};
+                   shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
+                   shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
 
         defaults["period"] =  20;
         defaults["deviation"] =  2.0;
@@ -259,8 +260,8 @@ public:
         name="DonchianChannel";
         triggers = crossingTriggers("bar", "upper") +
                    crossingTriggers("bar", "lower") +
-                   vector<Trigger>{HigherThan{"bar", "upper"}, LowerThan{"bar", "lower"}};
-
+                   shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
+                   shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
         defaults["period"] =  10;
         
     }
@@ -274,7 +275,8 @@ public:
         name="Envelopes";
         triggers = crossingTriggers("bar", "upper") +
                    crossingTriggers("bar", "lower") +
-                   vector<Trigger>{HigherThan{"bar", "upper"}, LowerThan{"bar", "lower"}};
+                   shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
+                   shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
 
         defaults["period"] = 14;
         defaults["deviation_pct"] = 10;

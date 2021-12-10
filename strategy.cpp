@@ -62,7 +62,7 @@ shared_ptr<bool[]> Criteria::apply(const Dataset &dataset, bool contra) {
     for(int i=0; i<configs.size(); i++){
         IndicatorConfig config = configs[i];
         auto result = config.compute(dataset, contra);
-//        trig_outputs[i].reset(result.get());
+        trig_outputs[i].swap(result);
     }
     return this->reduce(num_bars, trig_outputs);
 }

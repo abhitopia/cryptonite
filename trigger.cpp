@@ -153,39 +153,46 @@ shared_ptr<Trigger> CrossesDownward::get_contra() {
 }
 
 
-vector<Trigger> higherLowerThanTriggers(string comparand, string comparator) {
-    HigherThan trigger(comparand, comparator);
-    LowerThan ctrigger(comparand, comparator);
-    vector<Trigger> result{trigger, ctrigger};
+vector<shared_ptr<Trigger>> higherLowerThanTriggers(string comparand, string comparator) {
+    vector<shared_ptr<Trigger>> result;
+    result.emplace_back(new HigherThan(comparand, comparator));
+    result.emplace_back(new LowerThan(comparand, comparator));
     return result;
 }
 
-vector<Trigger> riseFallTriggers(string comparand) {
-    Rises trigger(comparand);
-    Falls ctrigger(comparand);
-    vector<Trigger> result{trigger, ctrigger};
+vector<shared_ptr<Trigger>> riseFallTriggers(string comparand) {
+    vector<shared_ptr<Trigger>> result;
+    result.emplace_back(new Rises(comparand));
+    result.emplace_back(new Falls(comparand));
     return result;
 }
 
-vector<Trigger> directionChangeTriggers(string comparand) {
-    ChangesDirectionUpward trigger(comparand);
-    ChangesDirectionDownward ctrigger(comparand);
-    vector<Trigger> result{trigger, ctrigger};
+vector<shared_ptr<Trigger>> directionChangeTriggers(string comparand) {
+    vector<shared_ptr<Trigger>> result;
+    result.emplace_back(new ChangesDirectionUpward(comparand));
+    result.emplace_back(new ChangesDirectionDownward(comparand));
     return result;
 }
 
-std::vector<Trigger> operator+(const vector<Trigger> &v1, const vector<Trigger> &v2) {
-    std::vector<Trigger> vr(std::begin(v1), std::end(v1));
+vector<shared_ptr<Trigger>> crossingTriggers(string comparand, string comparator) {
+    vector<shared_ptr<Trigger>> result;
+    result.emplace_back(new CrossesUpward(comparand, comparator));
+    result.emplace_back(new CrossesDownward(comparand, comparator));
+    return result;
+}
+
+std::vector<shared_ptr<Trigger>> operator+(const vector<shared_ptr<Trigger>> &v1, const vector<shared_ptr<Trigger>> &v2) {
+    std::vector<shared_ptr<Trigger>> vr(std::begin(v1), std::end(v1));
     vr.insert(std::end(vr), std::begin(v2), std::end(v2));
     return vr;
 }
 
-vector<Trigger> crossingTriggers(string comparand, string comparator) {
-    CrossesUpward trigger(comparand, comparator);
-    CrossesDownward ctrigger(comparand, comparator);
-    vector<Trigger> result{trigger, ctrigger};
-    return result;
+std::vector<shared_ptr<Trigger>> operator+(const vector<shared_ptr<Trigger>> &v1, const shared_ptr<Trigger> &v2) {
+    std::vector<shared_ptr<Trigger>> vr(std::begin(v1), std::end(v1));
+    vr.emplace_back(v2);
+    return v1;
 }
+
 
 bool Trigger::has_level() {
     return _comparator == "level";

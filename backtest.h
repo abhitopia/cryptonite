@@ -6,9 +6,13 @@
 #define CRYPTONITE_BACKTEST_H
 
 
-class backtest {
+#include "strategy.h"
+
+class Backtest {
 
 };
 
+
+void backtest(Strategy &strategy, const Dataset &dataset);
 
 #endif //CRYPTONITE_BACKTEST_H

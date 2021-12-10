@@ -27,9 +27,9 @@ protected:
 public:
     Trigger() = delete;
     Trigger(string comparand, string comparator): _comparand(comparand), _comparator(comparator){};
-    virtual series_b compute(const int &len, series_d &comparand){};
-    virtual series_b compute(const int &len, series_d &comparand, series_d &comparator){};
-    virtual series_b compute(const int &len, series_d &comparand, double &comparator){};
+    virtual series_b compute(const int &len, series_d &comparand) = 0;
+    virtual series_b compute(const int &len, series_d &comparand, series_d &comparator) = 0;
+    virtual series_b compute(const int &len, series_d &comparand, double &comparator) = 0;
     virtual shared_ptr<Trigger> get_contra(){return nullptr;};
     bool has_level();
     string getComparand();
@@ -53,6 +53,8 @@ public:
         name = "rises";
     };
     series_b compute(const int &len, series_d &comparand) override;
+    series_b compute(const int &len, series_d &comparand, series_d &comparator){};
+    series_b compute(const int &len, series_d &comparand, double &comparator){};
     shared_ptr<Trigger> get_contra() override;
 };
 
@@ -62,7 +64,9 @@ public:
     Falls(string comparand): Trigger(comparand, "") {
         name="falls";
     };
-    series_b compute(const int &len, series_d &comparand) override;
+    series_b compute(const int &len, series_d &comparand);
+    series_b compute(const int &len, series_d &comparand, series_d &comparator){};
+    series_b compute(const int &len, series_d &comparand, double &comparator){};
     shared_ptr<Trigger> get_contra() override;
 };
 
@@ -72,7 +76,9 @@ public:
     ChangesDirectionUpward(string comparand): Trigger(comparand, "") {
         name="changes_direction_upward";
     };
-    series_b compute(const int &len, series_d &comparand) override;
+    series_b compute(const int &len, series_d &comparand);
+    series_b compute(const int &len, series_d &comparand, series_d &comparator){};
+    series_b compute(const int &len, series_d &comparand, double &comparator){};
     shared_ptr<Trigger> get_contra() override;
 };
 
@@ -82,7 +88,9 @@ public:
     ChangesDirectionDownward(string comparand): Trigger(comparand, "") {
         name="changes_direction_downward";
     };
-    series_b compute(const int &len, series_d &comparand) override;
+    series_b compute(const int &len, series_d &comparand);
+    series_b compute(const int &len, series_d &comparand, series_d &comparator){};
+    series_b compute(const int &len, series_d &comparand, double &comparator){};
     shared_ptr<Trigger> get_contra() override;
 };
 
@@ -92,8 +100,9 @@ public:
     HigherThan(string comparand, string comparator): Trigger(comparand, comparator) {
         name="higher_than";
     };
-    series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
-    series_b compute(const int &len, series_d &comparand, double &comparator) override;
+    series_b compute(const int &len, series_d &comparand){};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator);
+    series_b compute(const int &len, series_d &comparand, double &comparator);
     shared_ptr<Trigger> get_contra() override;
 };
 
@@ -103,8 +112,9 @@ public:
     LowerThan(string comparand, string comparator): Trigger(comparand, comparator) {
         name="lower_than";
     };
-    series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
-    series_b compute(const int &len, series_d &comparand, double &comparator) override;
+    series_b compute(const int &len, series_d &comparand){};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator);
+    series_b compute(const int &len, series_d &comparand, double &comparator);
     shared_ptr<Trigger> get_contra() override;
 };
 
@@ -114,8 +124,9 @@ public:
     CrossesUpward(string comparand, string comparator): Trigger(comparand, comparator) {
         name="crosses_upward";
     };
-    series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
-    series_b compute(const int &len, series_d &comparand, double &comparator) override;
+    series_b compute(const int &len, series_d &comparand){};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator);
+    series_b compute(const int &len, series_d &comparand, double &comparator);
     shared_ptr<Trigger> get_contra() override;
 };
 
@@ -125,17 +136,19 @@ public:
     CrossesDownward(string comparand, string comparator): Trigger(comparand, comparator) {
         name="crosses_upward";
     };
-    series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
-    series_b compute(const int &len, series_d &comparand, double &comparator) override;
+    series_b compute(const int &len, series_d &comparand){};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator);
+    series_b compute(const int &len, series_d &comparand, double &comparator);
     shared_ptr<Trigger> get_contra() override;
 };
 
-vector<Trigger> higherLowerThanTriggers(string comparand, string comparator);
-vector<Trigger> crossingTriggers(string comparand, string comparator);
-vector<Trigger> riseFallTriggers(string comparand);
+vector<shared_ptr<Trigger>> higherLowerThanTriggers(string comparand, string comparator);
+vector<shared_ptr<Trigger>> crossingTriggers(string comparand, string comparator);
+vector<shared_ptr<Trigger>> riseFallTriggers(string comparand);
+vector<shared_ptr<Trigger>> directionChangeTriggers(string comparand);
 
-vector<Trigger> directionChangeTriggers(string comparand);
+std::vector<shared_ptr<Trigger>> operator+(const std::vector<shared_ptr<Trigger>>& v1, const std::vector<shared_ptr<Trigger>>& v2);
+std::vector<shared_ptr<Trigger>> operator+(const std::vector<shared_ptr<Trigger>>& v1, const shared_ptr<Trigger>& v2);
 
-std::vector<Trigger> operator+(const std::vector<Trigger>& v1, const std::vector<Trigger>& v2);
 
 #endif //CRYPTONITE_TRIGGER_H
