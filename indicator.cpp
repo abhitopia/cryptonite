@@ -24,10 +24,8 @@ json Indicator::toJson() {
 
 unordered_map<string, double> Indicator::get_random_params(double exploration_prob) {
     unordered_map<string, double> params;
-//    cout << "Indicator:" << name << " Min Level " << min_level << endl;
     for (auto const& [key, val] : defaults)
     {
-//        cout << key << " " << val << endl;
         if (cryptonite::rand() > exploration_prob){ // level or don't explore
             params[key] = val;
         } else if (key == "apply_to"){
@@ -45,7 +43,7 @@ unordered_map<string, double> Indicator::get_random_params(double exploration_pr
 }
 
 IndicatorConfig Indicator::generate_config(double exploration_prob) {
-    IndicatorConfig config{triggers[cryptonite::randint(triggers.size())].get(),
+    IndicatorConfig config{triggers[cryptonite::randint(triggers.size())],
                            get_random_params(exploration_prob),
                            this};
 
@@ -171,21 +169,16 @@ json IndicatorConfig::toJson() {
 shared_ptr<bool[]> IndicatorConfig::compute(const Dataset &dataset, bool contra_trigger) {
     int num_bars = dataset.num_bars;
     unordered_map<string, shared_ptr<double[]>> output = this->indicator->compute(dataset, *this);
-    Trigger *trigger = this-> trigger;
-    if (contra_trigger){
-          trigger = trigger->get_contra().get();
-    }
-
+    shared_ptr<Trigger> trigger = contra_trigger ?  this->trigger->get_contra() : this-> trigger;
     shared_ptr<bool[]> result{nullptr};
-    std::cout << std::setw(4) << this->trigger->toJson() << std::endl;
 
-    string comparator = this->trigger->getComparator();
+    string comparator = trigger->getComparator();
     if (comparator == ""){
-        result = this->trigger->compute(num_bars, output[this->trigger->getComparand()]);
+        result = trigger->compute(num_bars, output[trigger->getComparand()]);
     } else if (comparator == "level"){
-        result = this->trigger->compute(num_bars, output[this->trigger->getComparand()], params["level"]);
+        result = trigger->compute(num_bars, output[trigger->getComparand()], params["level"]);
     } else {
-        result = this->trigger->compute(num_bars, output[this->trigger->getComparand()], output[comparator]);
+        result = trigger->compute(num_bars, output[trigger->getComparand()], output[comparator]);
     }
     return result;
 }
@@ -271,7 +264,8 @@ unordered_map<string, spda_t> DeMarker::compute(const Dataset &dataset, const In
 }
 
 unordered_map<string, spda_t> DirectionalIndicators::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    unordered_map<string, spda_t> result{{"value", di(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
+    auto value = di(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")});
+    unordered_map<string, spda_t> result{{"plus", value[0]}, {"minus", value[1]}};
     return result;
 }
 

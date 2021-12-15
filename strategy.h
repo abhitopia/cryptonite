@@ -38,7 +38,7 @@ struct TakeProfitGenConfig {
      double tp_max{0.1};
 
      TakeProfitGenConfig(Policy policy=Policy::SOMETIMES, double tp_min=0.01, double tp_max=0.1);
-     double get_tp();
+     double get_tp() const;
 
      json toJson();
 };
@@ -51,8 +51,8 @@ struct StopLossGenConfig {
 
     StopLossGenConfig(Policy policy=Policy::SOMETIMES, SLType type=SLType::ANY, double sl_min=0.01, double sl_max=0.1);
 
-    bool is_sl_trailing();
-    double get_sl();
+    bool is_sl_trailing() const;
+    double get_sl() const;
     json toJson();
 };
 
@@ -60,13 +60,13 @@ struct StopLossGenConfig {
 struct Criteria {
     vector<IndicatorConfig> configs{};
 
-    Criteria(const vector<IndicatorConfig> &configs){
+    Criteria(const vector<IndicatorConfig>& configs){
         this->configs = configs;
     }
 
-    virtual shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) = 0;
+    virtual shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) const = 0;
 
-    shared_ptr<bool[]> apply(const Dataset &dataset, bool contra=false);
+    shared_ptr<bool[]> apply(const Dataset &dataset, bool contra=false) const;
 
     static vector<IndicatorConfig> generate_configs(int num_indicators, double exploration_prob=0.5);
     json toJson();
@@ -75,64 +75,126 @@ struct Criteria {
 struct EntryCriteria : Criteria {
     explicit EntryCriteria(const vector<IndicatorConfig> &configs): Criteria(configs){};
 
-    shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) override;
+    shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) const override;
 
     static EntryCriteria generate(int num_indicators, double exploration_prob=0.5);
 
-//    json toJson();
 };
 
 struct ExitCriteria : Criteria {
     explicit ExitCriteria(const vector<IndicatorConfig> &configs): Criteria(configs){};
 
-    shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) override;
+    shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) const override;
 
     static ExitCriteria generate(int num_indicators, double exploration_prob=0.5);
-//    json toJson();
 
 };
 
 struct CriteriaGenConfig {
-    int num_max_entry_criteria{4};
-    int num_max_exit_criteria{2};
+    int numMaxEntryCriteria{4};
+    int numMaxExitCriteria{2};
     double exploration_prob{0.5};
     json toJson();
 };
 
+
 struct StrategyGenConfig {
-    CriteriaGenConfig crit_gen_config{};
-    TakeProfitGenConfig tp_gen_config{};
-    StopLossGenConfig sl_gen_config{};
+    CriteriaGenConfig criteriaGenConfig{};
+    TakeProfitGenConfig takeProfitGenConfig{};
+    StopLossGenConfig stopLossGenConfig{};
 
     json toJson();
 };
 
+
+struct BrokerConfig {
+    double commission{0.002};
+    double slippage{0.005};
+
+    json toJson();
+};
+
+struct DepositConfig {
+    double quoteDeposit{1000.0};
+    double maxBaseBorrow{-1.0};
+    DepositConfig(double quote_deposit=1000.0, double max_base_borrow=-1){
+        this->quoteDeposit = quote_deposit;
+        if(max_base_borrow < 0){
+            max_base_borrow = -1.0;
+        }
+        this->maxBaseBorrow = max_base_borrow;
+    }
+
+    json toJson();
+
+};
+
+
+struct PositionOpenConfig {
+    double quoteSize{1.0};
+    bool isAbsolute{false};
+    bool bidirectional{true};
+
+    PositionOpenConfig(double quote_size = 1.0, bool is_absolute = false, bool bidirectional = true){
+        this->isAbsolute = is_absolute;
+        this->quoteSize = quote_size;
+        this->bidirectional = bidirectional;
+        if(is_absolute) {
+            assert(quote_size < 0.5 && "Quote Size must be < 0.5 for absolute positions");
+        }
+        assert(quote_size <= 1.0 && quote_size > 0.1 && "Quote Size must be in [0.1, 1.0]");
+    }
+
+    json toJson();
+
+};
+
+
+struct PositionCloseConfig {
+    bool trailingSl{true};
+    double takeProfit{INFINITY};
+    double stopLoss{INFINITY};
+    PositionCloseConfig(double tp = INFINITY, double sl = INFINITY, bool trailing_sl = true){
+        if(tp < 0) {
+            tp = INFINITY;
+        }
+        if(sl < 0){
+            sl = INFINITY;
+        }
+        this->takeProfit = tp;
+        this->stopLoss = sl;
+        this->trailingSl = trailing_sl;
+    }
+
+    json toJson();
+
+};
+
 struct Strategy {
-    bool trailing_sl{};
-    double tp{INFINITY};
-    double sl{INFINITY};
+    PositionOpenConfig positionOpenConfig{};
+    PositionCloseConfig positionCloseConfig{};
     EntryCriteria entryCriteria;
     ExitCriteria exitCriteria;
+    DepositConfig depositConfig{};
+    BrokerConfig brokerConfig{};
 
-    Strategy(double tp, double sl, bool trailing_sl, const EntryCriteria& entryCriteria, const ExitCriteria& exitCriteria): entryCriteria(entryCriteria.configs), exitCriteria(exitCriteria.configs) {
-        this->tp = tp;
-        this->sl = sl;
-        this->trailing_sl = trailing_sl;
+    Strategy(const PositionOpenConfig& positionOpenConfig,
+             const PositionCloseConfig& positionCloseConfig,
+             const EntryCriteria& entryCriteria,
+             const ExitCriteria& exitCriteria,
+             const DepositConfig& depositConfig,
+             const BrokerConfig& brokerConfig
+             ): entryCriteria(entryCriteria.configs), exitCriteria(exitCriteria.configs) {
+        this->positionCloseConfig = positionCloseConfig;
+        this->positionOpenConfig = positionOpenConfig;
+        this->brokerConfig = brokerConfig;
+        this->depositConfig = depositConfig;
     }
 
-    static Strategy generate(StrategyGenConfig config){
-        double tp = config.tp_gen_config.get_tp();
-        bool trailing_sl = config.sl_gen_config.is_sl_trailing();
-        double sl = config.sl_gen_config.get_sl();
-
-        int num_entry_rules = cryptonite::randint(1, config.crit_gen_config.num_max_entry_criteria + 1);
-        int num_exit_rules = cryptonite::randint(1, config.crit_gen_config.num_max_exit_criteria + 1);
-
-        EntryCriteria entry_criteria{EntryCriteria::generate(num_entry_rules, config.crit_gen_config.exploration_prob)};
-        ExitCriteria exit_criteria{ExitCriteria::generate(num_exit_rules, config.crit_gen_config.exploration_prob)};
-
-        return Strategy(tp, sl, trailing_sl, entry_criteria, exit_criteria);
-    }
+    static Strategy generate(const StrategyGenConfig& config,
+                             const PositionOpenConfig& positionOpenConfig = PositionOpenConfig{},
+                             const DepositConfig& depositConfig = DepositConfig{},
+                             const BrokerConfig& brokerConfig = BrokerConfig{});
 
     json toJson();
 };

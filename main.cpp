@@ -38,27 +38,20 @@ void testIndicators(){
     StrategyGenConfig config;
     auto j = config.toJson();
     std::cout << std::setw(4) << j << std::endl;
+    double start_time = omp_get_wtime();
 
-    Strategy strategy = Strategy::generate(config);
-    std::cout << std::setw(4) << strategy.toJson() << std::endl;
+    #pragma omp parallel for default(none) shared(dataset, config)
+    for(int i=0; i< 1000; i++){
+//        cout << i << endl;
+        Strategy strategy = Strategy::generate(config);
+//        std::cout << std::setw(4) << strategy.toJson() << std::endl;
 
-    backtest(strategy, dataset);
-//    int i = 1;
+        Backtest backtester;
+        backtester(strategy, dataset);
+    }
+    double time = omp_get_wtime() - start_time;
+    cout << time << endl;
 
-//    bool test = dNaN == dNaN;
-//    cout << test;
-//    setup(dataset);
-//
-//    shared_ptr<Indicator> indicator{nullptr};
-//    IndicatorConfig config();
-//    for(int i=0; i<num_indicators; i++){
-//        for (int j=0; j< 1000; j++){
-//            cout << "Indicator Number: " << i;
-//            indicator = Indicators[i];
-//            config = indicator->generate_config(0.5);
-//            indicator->compute(dataset, config);
-//        }
-//    }
 }
 
 

@@ -28,13 +28,14 @@ using namespace CIndicator;
 class Indicator;
 
 struct IndicatorConfig{
-    Trigger *trigger;
+//    Trigger *trigger;
+    shared_ptr<Trigger> trigger{nullptr};
     unordered_map<string, double> params{};
     Indicator* indicator;
 
     IndicatorConfig(){};
-    IndicatorConfig(Trigger *trigger, const unordered_map<string, double> &params, Indicator* indicator){
-        this->trigger = trigger;
+    IndicatorConfig(shared_ptr<Trigger> trigger, const unordered_map<string, double> &params, Indicator* indicator){
+        this->trigger.swap(trigger);
         this->indicator = indicator;
         this->params = params;
     }
