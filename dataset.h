@@ -27,6 +27,19 @@ public:
 
     Dataset() = delete;
     Dataset(int num_bars, int *timestamp, double *open, double *high, double *low, double *close, double *volume);
+    int durationSeconds() const{
+        return timestamp[num_bars-1] - timestamp[0];
+    }
+
+    double durationDays() const {
+        return durationSeconds() / (24.0 * 60 * 60);
+    }
+
+    int intervalSeconds() const{
+        return timestamp[1] - timestamp[0];
+    }
+
+
     static Dataset from_csv(std::string);
 };
 

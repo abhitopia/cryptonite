@@ -7,12 +7,23 @@
 
 
 #include "strategy.h"
+#include "metrics.h"
 
 struct Signal {
     shared_ptr<bool[]> shouldLongEnter;
     shared_ptr<bool[]> shouldShortEnter;
     shared_ptr<bool[]> shouldLongExit;
     shared_ptr<bool[]> shouldShortExit;
+
+    int max_possible_entries(int numBars){
+        int maxEntries = 0;
+        for(int i=0; i <  numBars; i++){
+            if(shouldShortEnter[i] || shouldLongEnter[i]){
+                maxEntries += 1;
+            }
+        }
+        return maxEntries;
+    }
 };
 
 struct Order {
@@ -51,33 +62,21 @@ struct Trade {
 };
 
 
-struct Equity {
-    double quoteEquity{0.0};
-    double baseEquity{0.0};
-    double totalInQuote{0.0};
-    double borrowAllowance{0.0};
-
-    Equity(double quoteEquity, double baseEquity, double totalInQuote, double borrowAllowance) {
-        this->quoteEquity = quoteEquity;
-        this->baseEquity = baseEquity;
-        this->totalInQuote = totalInQuote;
-        this->borrowAllowance = borrowAllowance;
-
-    }
-
-    Equity getUpdatedEquity(double currentPrice, double quoteDelta = 0.0, double baseDelta = 0.0, double borrowAllowanceDelta = 0.0) const {
-        Equity newEquity{*this};
-        newEquity.quoteEquity = quoteEquity + quoteDelta;
-        newEquity.baseEquity = baseEquity + baseDelta;
-        newEquity.borrowAllowance = borrowAllowance + borrowAllowanceDelta;
-        newEquity.totalInQuote = newEquity.quoteEquity + newEquity.baseEquity * currentPrice;
-        return newEquity;
+struct StoppingCriteria {
+    int minNumTrades{10};
+    double minTotalEquityFraction{0.5};
+    StoppingCriteria(int minNumTrades=200, double minTotalEquityFraction=0.5){
+        assert(minNumTrades > 100 && "Minimum number of trades less than 1000 is not statistically significant");
+        assert(minTotalEquityFraction < 1.0 && minTotalEquityFraction > 0);
+        this->minNumTrades = minNumTrades;
+        this->minTotalEquityFraction = minTotalEquityFraction;
     }
 };
 
 struct Backtest {
     vector<Equity> equityCurve{};
     vector<Trade> trades{};
+    Metrics metrics{};
 
     bool hasActiveTrade(){
         return not trades.empty() && trades.back().active;
@@ -100,7 +99,9 @@ struct Backtest {
     Equity exitLong(int bar, double lastPrice, const Equity& equity, const Strategy& strategy);
     Equity exitShort(int bar, double lastPrice, const Equity& equity, const Strategy& strategy);
 
-    void operator()(const Strategy &strategy, const Dataset &dataset);
+    void operator()(const Strategy &strategy, const Dataset &dataset,
+            const StoppingCriteria& stoppingCriteria = StoppingCriteria{});
+
 };
 
 Signal computeSignal(Strategy &strategy, const Dataset &dataset);

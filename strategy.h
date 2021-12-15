@@ -170,6 +170,7 @@ struct PositionCloseConfig {
 
 };
 
+
 struct Strategy {
     PositionOpenConfig positionOpenConfig{};
     PositionCloseConfig positionCloseConfig{};

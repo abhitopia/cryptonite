@@ -184,8 +184,12 @@ Equity Backtest::exitShort(int bar, double lastPrice, const Equity& equity, cons
 }
 
 
-void Backtest::operator()(const Strategy &strategy, const Dataset &dataset) {
+void Backtest::operator()(const Strategy &strategy, const Dataset &dataset, const StoppingCriteria& stoppingCriteria) {
+
     Signal signal = computeSignal(strategy, dataset);
+    if (signal.max_possible_entries(dataset.num_bars) < stoppingCriteria.minNumTrades) {
+        return;
+    }
     const DepositConfig& depositConfig = strategy.depositConfig;
     const PositionOpenConfig& positionOpenConfig = strategy.positionOpenConfig;
     const PositionCloseConfig& positionCloseConfig = strategy.positionCloseConfig;
@@ -231,6 +235,16 @@ void Backtest::operator()(const Strategy &strategy, const Dataset &dataset) {
             }
         }
 
-        equityCurve.emplace_back(currentEquity.getUpdatedEquity(currentPrice));
+        currentEquity = currentEquity.getUpdatedEquity(currentPrice);
+        equityCurve.emplace_back(currentEquity);
+        if(currentEquity.totalInQuote < stoppingCriteria.minTotalEquityFraction * strategy.depositConfig.quoteDeposit ){
+            break;
+        }
+    }
+
+    int numTrades = trades.size();
+    if(numTrades >= stoppingCriteria.minNumTrades){
+        metrics.compute(strategy, dataset, equityCurve, numTrades);
+
     }
 }

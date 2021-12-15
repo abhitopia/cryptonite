@@ -2,10 +2,7 @@
 #include <omp.h>
 #include "dataset.h"
 #include "indicator.h"
-#include <chrono>
-#include "function.h"
 #include "strategy.h"
-#include "random.h"
 #include "backtest.h"
 
 using namespace std;
@@ -34,6 +31,9 @@ void openMP() {
 
 void testIndicators(){
     Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
+
+    cout << "Interval: " << dataset.intervalSeconds() << endl;
+    cout << "Duration: " << dataset.durationDays() << endl;
     setup(dataset);
     StrategyGenConfig config;
     auto j = config.toJson();
@@ -42,12 +42,10 @@ void testIndicators(){
 
     #pragma omp parallel for default(none) shared(dataset, config)
     for(int i=0; i< 1000; i++){
-//        cout << i << endl;
         Strategy strategy = Strategy::generate(config);
-//        std::cout << std::setw(4) << strategy.toJson() << std::endl;
-
         Backtest backtester;
         backtester(strategy, dataset);
+//        backtester.metrics();
     }
     double time = omp_get_wtime() - start_time;
     cout << time << endl;

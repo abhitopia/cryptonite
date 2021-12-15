@@ -212,5 +212,10 @@ Strategy Strategy::generate(const StrategyGenConfig &config, const PositionOpenC
     EntryCriteria entry_criteria{EntryCriteria::generate(num_entry_rules, config.criteriaGenConfig.exploration_prob)};
     ExitCriteria exit_criteria{ExitCriteria::generate(num_exit_rules, config.criteriaGenConfig.exploration_prob)};
 
-    return Strategy(positionOpenConfig, pos_close_config, entry_criteria, exit_criteria, depositConfig, brokerConfig);
+    return Strategy(positionOpenConfig,
+                    pos_close_config,
+                    entry_criteria,
+                    exit_criteria,
+                    depositConfig,
+                    brokerConfig);
 }
