@@ -144,11 +144,11 @@ Strategy Strategy::generate(const StrategyGenConfig &config) {
     PositionOpenConfig positionOpenConfig{quoteSize, isAbsolute, isBidirectional};
     PositionCloseConfig positionCloseConfig{tp, sl, trailingSl};
 
-    int num_entry_rules = cryptonite::randint(1, config.criteriaGenConfig.numMaxEntryCriteria + 1);
-    int num_exit_rules = cryptonite::randint(1, config.criteriaGenConfig.numMaxExitCriteria + 1);
+    int num_entry_rules = cryptonite::randint(1, config.rulesGenConfig.numMaxEntryRules + 1);
+    int num_exit_rules = cryptonite::randint(1, config.rulesGenConfig.numMaxExitRules + 1);
 
-    EntryCriteria entry_criteria{EntryCriteria::generate(num_entry_rules, config.criteriaGenConfig.exploration_prob)};
-    ExitCriteria exit_criteria{ExitCriteria::generate(num_exit_rules, config.criteriaGenConfig.exploration_prob)};
+    EntryCriteria entry_criteria{EntryCriteria::generate(num_entry_rules, config.rulesGenConfig.explorationProb)};
+    ExitCriteria exit_criteria{ExitCriteria::generate(num_exit_rules, config.rulesGenConfig.explorationProb)};
 
     return Strategy(positionOpenConfig,
                     positionCloseConfig,

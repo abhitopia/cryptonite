@@ -6977,7 +6977,7 @@ class App {
     /// Get a display name for an app
     std::string get_display_name(bool with_aliases = false) const {
         if(name_.empty()) {
-            return std::string("[Option Group: ") + get_group() + "]";
+            return std::string("") + get_group() + ":";
         }
         if(aliases_.empty() || !with_aliases) {
             return name_;

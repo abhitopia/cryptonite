@@ -27,7 +27,7 @@ string policyToString(Policy policy);
 enum SLType {
     FIXED = 0,
     TRAILING = 1,
-    ANY = 2
+    EITHER = 2
 };
 
 string slTypeToString(SLType sl_type);
@@ -35,11 +35,11 @@ string slTypeToString(SLType sl_type);
 
 struct TradeSizeGenConfig {
     Policy bidirectionalTradePolicy{Policy::ALWAYS};
-    Policy absoluteTradeSizePolicy{Policy::NEVER};
+    Policy fixedTradeSizePolicy{Policy::NEVER};
 
     TradeSizeGenConfig(Policy bidirectionalTradePolicy = Policy::ALWAYS, Policy absoluteTradeSizePolicy = Policy::NEVER){
         this->bidirectionalTradePolicy = bidirectionalTradePolicy;
-        this->absoluteTradeSizePolicy = absoluteTradeSizePolicy;
+        this->fixedTradeSizePolicy = absoluteTradeSizePolicy;
     }
 
     bool is_bidirectional() const;;
@@ -51,8 +51,8 @@ struct TradeSizeGenConfig {
 
 struct TakeProfitGenConfig {
     Policy policy{Policy::SOMETIMES};
-    double tp_min{0.01};
-    double tp_max{0.1};
+    double tpMin{0.01};
+    double tpMax{0.1};
 
     TakeProfitGenConfig(Policy policy=Policy::SOMETIMES, double tp_min=0.01, double tp_max=0.1);
     double get_tp() const;
@@ -62,21 +62,21 @@ struct TakeProfitGenConfig {
 
 struct StopLossGenConfig {
     Policy policy{Policy::ALWAYS};
-    SLType type{SLType::ANY};
-    double sl_min{0.01};
-    double sl_max{0.1};
+    SLType type{SLType::EITHER};
+    double slMin{0.01};
+    double slMax{0.1};
 
-    StopLossGenConfig(Policy policy=Policy::SOMETIMES, SLType type=SLType::ANY, double sl_min=0.01, double sl_max=0.1);
+    StopLossGenConfig(Policy policy=Policy::SOMETIMES, SLType type=SLType::EITHER, double sl_min=0.01, double sl_max=0.1);
 
     bool is_sl_trailing() const;
     double get_sl() const;
     json toJson();
 };
 
-struct CriteriaGenConfig {
-    int numMaxEntryCriteria{4};
-    int numMaxExitCriteria{2};
-    double exploration_prob{0.5};
+struct RulesGenConfig {
+    int numMaxEntryRules{4};
+    int numMaxExitRules{2};
+    double explorationProb{0.5};
     json toJson();
 };
 
@@ -104,7 +104,7 @@ struct DepositConfig {
 
 struct StrategyGenConfig {
     TradeSizeGenConfig tradeSizeGenConfig{};
-    CriteriaGenConfig criteriaGenConfig{};
+    RulesGenConfig rulesGenConfig{};
     TakeProfitGenConfig takeProfitGenConfig{};
     StopLossGenConfig stopLossGenConfig{};
     BrokerConfig brokerConfig{};

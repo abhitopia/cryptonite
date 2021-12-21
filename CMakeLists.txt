@@ -1,7 +1,25 @@
 cmake_minimum_required(VERSION 3.20)
+
+## --- Fetch FTXUI --------------------------------------------------------------
+#include(FetchContent)
+#
+#set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
+#FetchContent_Declare(ftxui
+#        GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
+#        GIT_TAG v0.11
+#        )
+#
+#FetchContent_GetProperties(ftxui)
+#if(NOT ftxui_POPULATED)
+#    FetchContent_Populate(ftxui)
+#    add_subdirectory(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
+#endif()
+#
+## ------------------------------------------------------------------------------
+
 project(cryptonite LANGUAGES CXX)
 
-add_subdirectory(lib)
+add_subdirectory(include)
 set(CMAKE_CXX_STANDARD 17)
 
 
@@ -18,11 +36,22 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -lpthread -std=c++17 -std=gnu++17")
 
 
-#add_subdirectory(lib)
-#add_subdirectory(lib/indicators)
+file(GLOB all_includes
+        "include/*.h"
+        "include/*.hpp"
+        "src/*.h"
+        "src/*cpp"
+        "*.cpp"
+        )
 
-add_executable(cryptonite main.cpp dataset.cpp dataset.h lib/csv/csv.h lib/date/date.h  lib/json/json.h indicator.cpp indicator.h trigger.cpp trigger.h random.cpp random.h function.cpp function.h constants.cpp constants.h strategy.cpp strategy.h backtest.cpp backtest.h metrics.cpp metrics.h equity.cpp equity.h)
+add_executable(cryptonite ${all_includes})
 target_link_libraries(cryptonite CIndicators)
+
+#target_link_libraries(cryptonite PUBLIC CIndicators
+#        PRIVATE ftxui::screen
+#        PRIVATE ftxui::dom
+#        PRIVATE ftxui::component # Not needed for this example.
+#        )
 target_compile_features(cryptonite PRIVATE cxx_std_17)
 
 
