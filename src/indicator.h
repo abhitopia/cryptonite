@@ -18,7 +18,7 @@
 #include "constants.h"
 #include <math.h>
 #include <limits>
-#include "lib/json/json.h"
+#include "../include/json.h"
 
 using json = nlohmann::json;
 

@@ -4,7 +4,7 @@
 
 #ifndef CRYPTONITE_FUNCTION_H
 #define CRYPTONITE_FUNCTION_H
-#include "lib/indicators/cindicators.h"
+#include "../include/indicators/cindicators.h"
 #include "constants.h"
 #include <memory>
 #include <vector>

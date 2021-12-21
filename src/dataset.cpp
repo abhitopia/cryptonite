@@ -3,8 +3,8 @@
 //
 #include <iostream>
 #include "dataset.h"
-#include "lib/csv/csv.h"
-#include "lib/date/date.h"
+#include "../include/csv.h"
+#include "../include/date.h"
 
 
 using namespace io;

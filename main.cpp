@@ -1,33 +1,15 @@
 #include <iostream>
 #include <omp.h>
-#include "dataset.h"
-#include "indicator.h"
-#include "strategy.h"
-#include "backtest.h"
+#include "src/dataset.h"
+#include "src/indicator.h"
+#include "src/strategy.h"
+#include "src/backtest.h"
+#include "include/progressbar.hpp"
+#include "include/CLI11.hpp"
 
 using namespace std;
 using namespace std::chrono;
 
-
-void openMP() {
-    double start_time = omp_get_wtime();
-    int i;
-    int threadID = 0;
-    #pragma omp parallel for private(i, threadID)
-    for(i = 0; i < 20; i++ )
-    {
-        threadID = omp_get_thread_num();
-
-        #pragma omp critical
-        {
-            printf("Thread %d reporting\n", threadID);
-        }
-    }
-
-    double time = omp_get_wtime() - start_time;
-    cout << time << endl;
-
-}
 
 void testIndicators(){
     Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
@@ -40,68 +22,67 @@ void testIndicators(){
     std::cout << std::setw(4) << j << std::endl;
     double start_time = omp_get_wtime();
 
-    #pragma omp parallel for default(none) shared(dataset, config)
-    for(int i=0; i< 1000; i++){
+    int numIterations = 100;
+    progressbar bar(numIterations);
+    #pragma omp parallel for default(none) shared(dataset, config, numIterations, bar)
+    for(int i=0; i<numIterations;i++){
         Strategy strategy = Strategy::generate(config);
         Backtest backtester;
         backtester(strategy, dataset);
-//        backtester.metrics();
+        #pragma omp critical
+        {
+            bar.update();
+        };
     }
     double time = omp_get_wtime() - start_time;
-    cout << time << endl;
+    cout << "\n" << time << endl;
 
 }
 
+StrategyGenConfig configure(CLI::App& app){
+    StrategyGenConfig config;
+    CLI::App* configure = app.add_subcommand("configure", "Configure Generation of Strategies");
 
-int main() {
-//    RandomGenerator gen{};
-//    _Random->seed(42);
-    testIndicators();
+    configure->add_flag("--tp-sometime{sometime},--tp-always{always}", config.takeProfitGenConfig.policy, "TakeProfitPolicy")
+             ->default_val(config.takeProfitGenConfig.policy)
+             ->default_str(policyToString(config.takeProfitGenConfig.policy));
+    return config;
+}
 
-//#pragma omp parallel for
-//    for(int i=0; i < 100; i++){
-//        cout << "Generated: " << randn() << endl;
-//    }
+int main(int argc, char **argv) {
+    CLI::App app{"Cryptonite Application is a series of commands that lets you generate, backtest and"
+                 "optimise a trading strategy.", "cryptonite"};
+    app.set_help_all_flag();
+    app.require_subcommand(1); // require one subcommand, either configure, generate, optimize
+    StrategyGenConfig config = configure(app);
 
-//    Dataset dataset = Dataset::from_csv("tests/ETHGBP_5m.csv");
-
-//    auto result = CIndicator::abs(dataset.num_bars, {dataset.typical});
-
-//    Alligator ind{};
-//    IndicatorConfig config = ind.generate_config(1.0);
-//    for(int i=0; i< 100; i++) {
-//        cout << cryptonite::randint(0, 2) << endl;
-//    }
-//    auto result1 = ind.compute(dataset, config);
-//    cout << result1["value"][0] << endl;
-//    unique_ptr<bool[]> result{std::move(rises(dataset.num_bars, dataset.open, dataset.open))};
-
+    CLI11_PARSE(app, argc, argv);
+//    testIndicators();
     return 0;
 }
 
 
-/*
- * Generated: In Thread 0
-0.796543
-Generated: In Thread 0
-0.183435
-Generated: In Thread 0
-0.779691
-Generated: In Thread 0
-0.59685
-Generated: In Thread 0
-0.445833
-Generated: In Thread 0
-0.0999749
-Generated: In Thread 0
-0.459249
-Generated: In Thread 0
-0.333709
-Generated: In Thread 0
-0.142867
-Generated: In Thread 0
-0.650888
-8The number of members in trigger 8
-Process finished with exit code 0
-
- */
+//enum class Level : int { High, Medium, Low };
+//
+//int main(int argc, char **argv) {
+//    CLI::App app;
+//
+//    Level level{Level::Low};
+//    // specify string->value mappings
+//    std::map<std::string, Level> map{{"high",   Level::High},
+//                                     {"medium", Level::Medium},
+//                                     {"low",    Level::Low}};
+//    // CheckedTransformer translates and checks whether the results are either in one of the strings or in one of the
+//    // translations already
+//    app.add_flag("-l{high},--level{high}, -m{medium}", level, "Level settings")
+//            ->required()
+//            ->transform(CLI::CheckedTransformer(map, CLI::ignore_case));
+//
+//    CLI11_PARSE(app, argc, argv);
+//
+//    // CLI11's built in enum streaming can be used outside CLI11 like this:
+//    using CLI::enums::operator<<;
+//    std::cout << "Enum received: " << level << std::endl;
+//
+//    return 0;
+//}

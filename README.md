@@ -6,3 +6,7 @@
 # TODOs
 - [x] Check why short trade is never entered
 - [x] Check why there is bad memory access error sometimes
+- [ ] Implement TQDM
+- [ ] Add dataset metadata
+- [ ] Add a Cli
+- 

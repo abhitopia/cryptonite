@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "lib/json/json.h"
+#include "../include/json.h"
 
 using json = nlohmann::json;
 using namespace std;
