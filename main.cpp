@@ -44,6 +44,23 @@ StrategyGenConfig configure(CLI::App& app){
     StrategyGenConfig config;
     CLI::App* configure = app.add_subcommand("configure", "Configure Generation of Strategies");
 
+    // Rules
+    auto rulesConfig = configure->add_option_group("Rules Configuration");
+    rulesConfig->add_option("--max-entry-rules,--mnr", config.rulesGenConfig.numMaxEntryRules,
+                            "Maximum number of entry rules used in generated strategies")
+               ->check(CLI::Range(1, 6))
+               ->check(CLI::TypeValidator<int>())
+               ->capture_default_str();
+    rulesConfig->add_option("--max-exit-rules,--mxr", config.rulesGenConfig.numMaxExitRules,
+                            "Maximum number of exit rules used in generated strategies")
+            ->check(CLI::Range(1, 6))
+            ->check(CLI::TypeValidator<int>())
+            ->capture_default_str();
+    rulesConfig->add_option("--exploration-prob,--ep", config.rulesGenConfig.explorationProb,
+                            "This number controls probability with which the generated rule parameters deviate from their default values.")
+            ->check(CLI::Range(0.01, 1.0));
+
+
     // Trade Size
     auto tradeSize = configure->add_option_group("Trade Size Configuration");
     auto bidirectionalPolicy = tradeSize->add_option_group("Bidirectional Trade Policy",
