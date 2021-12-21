@@ -40,7 +40,8 @@ file(GLOB all_includes
         "include/*.h"
         "include/*.hpp"
         "src/*.h"
-        "src/*cpp"
+        "src/*.cpp"
+        "cli/*.cpp"
         "*.cpp"
         )
 
