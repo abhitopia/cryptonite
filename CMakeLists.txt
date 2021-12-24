@@ -42,11 +42,12 @@ file(GLOB all_includes
         "src/*.h"
         "src/*.cpp"
         "cli/*.cpp"
+        "cli/*.h"
         "*.cpp"
         )
 
 add_executable(cryptonite ${all_includes})
-target_link_libraries(cryptonite CIndicators)
+target_link_libraries(cryptonite CIndicators fort)
 
 #target_link_libraries(cryptonite PUBLIC CIndicators
 #        PRIVATE ftxui::screen

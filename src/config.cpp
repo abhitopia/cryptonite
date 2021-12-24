@@ -6,17 +6,17 @@
 
 string policyToString(Policy policy) {
     switch(policy){
-        case ALWAYS: return "ALWAYS";
-        case NEVER: return "NEVER";
-        case SOMETIMES: return "SOMETIMES";
+        case ALWAYS: return "always";
+        case NEVER: return "never";
+        case SOMETIMES: return "sometimes";
     }
 }
 
 string slTypeToString(SLType sl_type) {
     switch(sl_type){
-        case FIXED: return "FIXED";
-        case TRAILING: return "TRAILING";
-        case EITHER: return "EITHER";
+        case FIXED: return "fixed";
+        case TRAILING: return "trailing";
+        case EITHER: return "either";
     }
 }
 

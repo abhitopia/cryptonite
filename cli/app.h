@@ -2,8 +2,11 @@
 // Created by Abhishek Aggarwal on 21/12/2021.
 //
 
+#ifndef CLI_APP_H
+#define CLI_APP_H
+
 #include "../include/CLI11.hpp"
-#include "configure.cpp"
+#include "configure.h"
 
 using namespace std;
 
@@ -35,10 +38,29 @@ public:
         }
     }
 
+    void parse(){
+        for(auto command: commands){
+            command->parse();
+        }
+    }
+
     int run(int argc, char **argv){
         addCommand(shared_ptr<CryptoniteCommand>{new Configure});
         setup();
+
         CLI11_PARSE(app, argc, argv);
+
+        try {                                                                                                              \
+            parse();
+//            Database db("Hello.txt");
+                                                                                            \
+        } catch (const std::system_error& e) {
+            cout << e.what() << " (" << e.code() << ")" << std::endl;
+        }
+
         return 0;
     }
 };
+
+
+#endif

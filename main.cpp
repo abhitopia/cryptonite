@@ -6,7 +6,7 @@
 #include "src/backtest.h"
 #include "include/progressbar.hpp"
 #include "include/CLI11.hpp"
-#include "cli/app.cpp"
+#include "cli/app.h"
 
 
 using namespace std;
