@@ -7,8 +7,10 @@
 - [x] Check why short trade is never entered
 - [x] Check why there is bad memory access error sometimes
 - [x] Implement TQDM
+- [ ] Add dataset downloading facility
+  - [x] Install requests package
 - [ ] Add dataset metadata
-- [ ] Add a Cli
+- [x] Add a config Cli
   - [x] Don't show default for update 
   - [x] Change setConfig
   - [x] add timestamp metadata

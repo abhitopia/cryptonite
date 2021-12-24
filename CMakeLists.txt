@@ -47,7 +47,7 @@ file(GLOB all_includes
         )
 
 add_executable(cryptonite ${all_includes})
-target_link_libraries(cryptonite CIndicators fort)
+target_link_libraries(cryptonite CIndicators fort cpr::cpr)
 
 #target_link_libraries(cryptonite PUBLIC CIndicators
 #        PRIVATE ftxui::screen

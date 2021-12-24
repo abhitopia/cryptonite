@@ -7,6 +7,8 @@
 #include "include/progressbar.hpp"
 #include "include/CLI11.hpp"
 #include "cli/app.h"
+#include <cpr/cpr.h>
+
 
 
 using namespace std;
@@ -44,6 +46,15 @@ void testIndicators(){
 
 int main(int argc, char **argv) {
     CryptoniteApp app{};
+    cpr::Response r = cpr::Get(cpr::Url{"https://www.google.com"});
+
+//    cpr::Response r = cpr::Get(cpr::Url{"http://www.httpbin.org/get"});
+    std::cout << r.url << std::endl; // http://www.httpbin.org/get
+    std::cout << r.status_code << std::endl; // 200
+    std::cout << r.header["content-type"] << std::endl; // application/json
+    std::cout << r.text << std::endl;
+    std::cout << r.error.message << std::endl;
+
     return app.run(argc,argv);
 }
 
