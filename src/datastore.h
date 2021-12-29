@@ -95,7 +95,7 @@ class DataStore {
     json dataJson;
     DataSetV2 dataset;
 
-    json load(){
+    void load(){
         auto api =  BinanceAPI{};
         auto filePath = path();
         if(fs::exists(filePath)){
@@ -175,7 +175,7 @@ class DataStore {
     }
 
     int nextUpdateAt(){
-
+        return lastTimestamp() + dataset.info.intervalInSeconds();
     }
 
     void getDataset(){

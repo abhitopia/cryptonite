@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include <iostream>
 #include "../include/json.h"
@@ -17,15 +18,17 @@ typedef const std::shared_ptr<double[]> series_d;
 typedef std::shared_ptr<bool[]> series_b;
 
 
+series_b UnimplementedError();
+
 class Trigger {
 protected:
-    std::string name = "";
-    std::string _comparand = "";
-    std::string _comparator = "";
+    std::string name;
+    std::string _comparand;
+    std::string _comparator;
 
 public:
     Trigger() = delete;
-    Trigger(std::string comparand, std::string comparator): _comparand(comparand), _comparator(comparator){};
+    Trigger(std::string comparand, std::string comparator): _comparand(std::move(comparand)), _comparator(std::move(comparator)){};
     virtual series_b compute(const int &len, series_d &comparand) = 0;
     virtual series_b compute(const int &len, series_d &comparand, series_d &comparator) = 0;
     virtual series_b compute(const int &len, series_d &comparand, double &comparator) = 0;
@@ -46,98 +49,99 @@ class ChangesDirectionUpward;
 class ChangesDirectionDownward;
 
 class Rises: public Trigger {
-    Rises();
 public:
-    Rises(std::string comparand): Trigger(comparand, "") {
+    Rises() = delete;
+    explicit Rises(std::string comparand): Trigger(std::move(comparand), "") {
         name = "rises";
     };
     series_b compute(const int &len, series_d &comparand) override;
-    series_b compute(const int &len, series_d &comparand, series_d &comparator){};
-    series_b compute(const int &len, series_d &comparand, double &comparator){};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator) override{return UnimplementedError();};
+    series_b compute(const int &len, series_d &comparand, double &comparator) override{return UnimplementedError();};
     std::shared_ptr<Trigger> get_contra() override;
 };
 
 class Falls: public Trigger {
-    Falls();
 public:
-    Falls(std::string comparand): Trigger(comparand, "") {
+    Falls() = delete;
+    explicit Falls(std::string comparand): Trigger(std::move(comparand), "") {
         name="falls";
     };
-    series_b compute(const int &len, series_d &comparand);
-    series_b compute(const int &len, series_d &comparand, series_d &comparator){};
-    series_b compute(const int &len, series_d &comparand, double &comparator){};
+    series_b compute(const int &len, series_d &comparand) override;
+    series_b compute(const int &len, series_d &comparand, series_d &comparator) override{return UnimplementedError();};
+    series_b compute(const int &len, series_d &comparand, double &comparator) override{return UnimplementedError();};
     std::shared_ptr<Trigger> get_contra() override;
 };
 
 class ChangesDirectionUpward : public Trigger {
-    ChangesDirectionUpward();
 public:
-    ChangesDirectionUpward(std::string comparand): Trigger(comparand, "") {
+    ChangesDirectionUpward() = delete;
+    explicit ChangesDirectionUpward(std::string comparand): Trigger(std::move(comparand), "") {
         name="changes_direction_upward";
     };
-    series_b compute(const int &len, series_d &comparand);
-    series_b compute(const int &len, series_d &comparand, series_d &comparator){};
-    series_b compute(const int &len, series_d &comparand, double &comparator){};
+    series_b compute(const int &len, series_d &comparand) override;
+    series_b compute(const int &len, series_d &comparand, series_d &comparator) override{return UnimplementedError();};
+    series_b compute(const int &len, series_d &comparand, double &comparator) override{return UnimplementedError();};
     std::shared_ptr<Trigger> get_contra() override;
 };
 
 class ChangesDirectionDownward : public Trigger {
-    ChangesDirectionDownward();
 public:
-    ChangesDirectionDownward(std::string comparand): Trigger(comparand, "") {
+    ChangesDirectionDownward() = delete;
+    explicit ChangesDirectionDownward(std::string comparand): Trigger(std::move(comparand), "") {
         name="changes_direction_downward";
     };
-    series_b compute(const int &len, series_d &comparand);
-    series_b compute(const int &len, series_d &comparand, series_d &comparator){};
-    series_b compute(const int &len, series_d &comparand, double &comparator){};
+    series_b compute(const int &len, series_d &comparand) override;
+    series_b compute(const int &len, series_d &comparand, series_d &comparator) override{return UnimplementedError();};
+    series_b compute(const int &len, series_d &comparand, double &comparator) override{return UnimplementedError();};
     std::shared_ptr<Trigger> get_contra() override;
 };
 
 class HigherThan : public Trigger {
-    HigherThan();
 public:
-    HigherThan(std::string comparand, std::string comparator): Trigger(comparand, comparator) {
+    HigherThan() = delete;
+    HigherThan(std::string comparand, std::string comparator): Trigger(std::move(comparand), std::move(comparator)) {
         name="higher_than";
     };
-    series_b compute(const int &len, series_d &comparand){};
-    series_b compute(const int &len, series_d &comparand, series_d &comparator);
-    series_b compute(const int &len, series_d &comparand, double &comparator);
+    series_b compute(const int &len, series_d &comparand) override{return UnimplementedError();};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
+    series_b compute(const int &len, series_d &comparand, double &comparator) override;
     std::shared_ptr<Trigger> get_contra() override;
 };
 
 class LowerThan : public Trigger {
-    LowerThan();
 public:
-    LowerThan(std::string comparand, std::string comparator): Trigger(comparand, comparator) {
+    LowerThan() = delete;
+
+    LowerThan(std::string comparand, std::string comparator): Trigger(std::move(comparand), std::move(comparator)) {
         name="lower_than";
     };
-    series_b compute(const int &len, series_d &comparand){};
-    series_b compute(const int &len, series_d &comparand, series_d &comparator);
-    series_b compute(const int &len, series_d &comparand, double &comparator);
+    series_b compute(const int &len, series_d &comparand) override{return UnimplementedError();};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
+    series_b compute(const int &len, series_d &comparand, double &comparator) override;
     std::shared_ptr<Trigger> get_contra() override;
 };
 
 class CrossesUpward : public Trigger {
-    CrossesUpward();
 public:
-    CrossesUpward(std::string comparand, std::string comparator): Trigger(comparand, comparator) {
+    CrossesUpward() = delete;
+    CrossesUpward(std::string comparand, std::string comparator): Trigger(std::move(comparand), std::move(comparator)) {
         name="crosses_upward";
     };
-    series_b compute(const int &len, series_d &comparand){};
-    series_b compute(const int &len, series_d &comparand, series_d &comparator);
-    series_b compute(const int &len, series_d &comparand, double &comparator);
+    series_b compute(const int &len, series_d &comparand) override{return UnimplementedError();};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
+    series_b compute(const int &len, series_d &comparand, double &comparator) override;
     std::shared_ptr<Trigger> get_contra() override;
 };
 
 class CrossesDownward : public Trigger {
-    CrossesDownward();
 public:
-    CrossesDownward(std::string comparand, std::string comparator): Trigger(comparand, comparator) {
+    CrossesDownward() = delete;
+    CrossesDownward(std::string comparand, std::string comparator): Trigger(std::move(comparand), std::move(comparator)) {
         name="crosses_upward";
     };
-    series_b compute(const int &len, series_d &comparand){};
-    series_b compute(const int &len, series_d &comparand, series_d &comparator);
-    series_b compute(const int &len, series_d &comparand, double &comparator);
+    series_b compute(const int &len, series_d &comparand) override{return UnimplementedError();};
+    series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
+    series_b compute(const int &len, series_d &comparand, double &comparator) override;
     std::shared_ptr<Trigger> get_contra() override;
 };
 

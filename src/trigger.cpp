@@ -192,6 +192,11 @@ std::vector<std::shared_ptr<Trigger>> operator+(const std::vector<std::shared_pt
     return v1;
 }
 
+series_b UnimplementedError() {
+    std::runtime_error("This function should never have been called!");
+    return series_b{};
+}
+
 
 bool Trigger::has_level() {
     return _comparator == "level";

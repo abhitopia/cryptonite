@@ -72,7 +72,7 @@ Equity Backtest::enterLong(int bar, double lastPrice, const Equity& equity, cons
 
     Equity newEquity = equity.getUpdatedEquity(currentPrice, -quoteLost, baseGained, allowanceReturned);
 
-    Order order;
+    Order order{};
     order.bar = bar;
     order.quoteSize = -quoteLost;
     order.baseSize = baseGained;
@@ -112,7 +112,7 @@ Equity Backtest::enterShort(int bar, double lastPrice, const Equity& equity, con
 
     Equity newEquity = equity.getUpdatedEquity(currentPrice, quoteGained, -baseBorrowed, -baseBorrowed);
 
-    Order order;
+    Order order{};
     order.bar = bar;
     order.quoteSize = quoteGained;
     order.baseSize = -baseBorrowed;
@@ -141,7 +141,7 @@ Equity Backtest::exitLong(int bar, double lastPrice, const Equity& equity, const
 
     Equity newEquity = equity.getUpdatedEquity(currentPrice, quoteGained, -baseLost, 0.0);
 
-    Order order;
+    Order order{};
     order.bar = bar;
     order.quoteSize = quoteGained;
     order.baseSize = -baseLost;
@@ -172,7 +172,7 @@ Equity Backtest::exitShort(int bar, double lastPrice, const Equity& equity, cons
 
     Equity newEquity = equity.getUpdatedEquity(currentPrice, -quoteLost, baseGained, baseGained);
 
-    Order order;
+    Order order{};
     order.bar = bar;
     order.quoteSize = -quoteLost;
     order.baseSize = baseGained;
@@ -242,7 +242,7 @@ void Backtest::operator()(const Strategy &strategy, const Dataset &dataset, cons
         }
     }
 
-    int numTrades = trades.size();
+    int numTrades = (int)trades.size();
     if(numTrades >= stoppingCriteria.minNumTrades){
         metrics.compute(strategy, dataset, equityCurve, numTrades);
 

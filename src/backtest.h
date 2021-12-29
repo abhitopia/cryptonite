@@ -35,8 +35,8 @@ struct Order {
 };
 
 struct Trade {
-    Order openingOrder;
-    Order closingOrder;
+    Order openingOrder{};
+    Order closingOrder{};
     double takeProfit{INFINITY};
     double stopLoss{INFINITY};
     bool trailingSl{false};

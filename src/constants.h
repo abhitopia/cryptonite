@@ -5,7 +5,7 @@
 #ifndef CRYPTONITE_CONSTANTS_H
 #define CRYPTONITE_CONSTANTS_H
 
-#include <limits>;
+#include <limits>
 
 extern double sample_std;
 extern double sample_offset;
