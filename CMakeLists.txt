@@ -61,7 +61,7 @@ include_directories(${cpr_SOURCE_DIR}/include)
 include_directories(${cpr_BINARY_DIR}/include)
 include_directories(include)
 
-add_executable(cryptonite ${all_includes} src/file_handler.cpp src/file_handler.h)
+add_executable(cryptonite ${all_includes})
 #target_link_libraries(cryptonite PRIVATE CIndicators fort cpr::cpr binapi ${Boost_LIBRARIES})
 target_link_libraries(cryptonite PRIVATE CIndicators fort cpr::cpr)
 

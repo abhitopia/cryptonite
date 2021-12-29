@@ -24,4 +24,3 @@ FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git GIT_TA
 FetchContent_MakeAvailable(cpr)
 add_subdirectory(fort)
 add_subdirectory(indicators)
-#add_subdirectory(binapi)
