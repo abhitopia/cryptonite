@@ -7,16 +7,16 @@
 namespace cryptonite{
     RandomGenerator::RandomGenerator() {
         max_threads = omp_get_max_threads();
-        generators.reset(new mt19937[max_threads]);
+        generators.reset(new std::mt19937[max_threads]);
     }
 
-    shared_ptr<RandomGenerator> _Random{new RandomGenerator{}};
+    std::shared_ptr<RandomGenerator> _Random{new RandomGenerator{}};
 
 
     void seed(const int &seed) {
         int i;
         unsigned int _seed;
-#pragma omp parallel for private (i, _seed) default(none) firstprivate(seed) shared(cout, _Random)
+#pragma omp parallel for private (i, _seed) default(none) firstprivate(seed) shared( _Random)
         for(i=0; i < _Random->max_threads; i++){
             if(seed < 0){
                 //create seed on thread using current time

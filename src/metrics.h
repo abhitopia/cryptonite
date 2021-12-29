@@ -21,7 +21,7 @@ struct Metrics {
     double avgDrawDown{INFINITY};
     int numTrades{0};
 
-    void compute(const Strategy &strategy, const Dataset &dataset, const vector<Equity>& equityCurve, int numberOfTrades);
+    void compute(const Strategy &strategy, const Dataset &dataset, const std::vector<Equity>& equityCurve, int numberOfTrades);
 
 };
 

@@ -25,7 +25,7 @@ json Database::readDB() {
     if(not fs::exists(dbPath)){
         return json::object({});
     }
-    ifstream file; // Read
+    std::ifstream file; // Read
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     file.open(dbPath.c_str());
     // after open, check f and throw std::system_error with the errno

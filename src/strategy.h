@@ -15,38 +15,37 @@
 
 using json = nlohmann::json;
 
-using namespace std;
 
 
 
 struct Criteria {
-    vector<IndicatorConfig> configs{};
+    std::vector<IndicatorConfig> configs{};
 
-    Criteria(const vector<IndicatorConfig>& configs){
+    Criteria(const std::vector<IndicatorConfig>& configs){
         this->configs = configs;
     }
 
-    virtual shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) const = 0;
+    virtual std::shared_ptr<bool[]> reduce(int num_bars, const std::vector<std::shared_ptr<bool []>> &trig_outputs) const = 0;
 
-    shared_ptr<bool[]> apply(const Dataset &dataset, bool contra=false) const;
+    std::shared_ptr<bool[]> apply(const Dataset &dataset, bool contra=false) const;
 
-    static vector<IndicatorConfig> generate_configs(int num_indicators, double exploration_prob=0.5);
+    static std::vector<IndicatorConfig> generate_configs(int num_indicators, double exploration_prob=0.5);
     json toJson();
 };
 
 struct EntryCriteria : Criteria {
-    explicit EntryCriteria(const vector<IndicatorConfig> &configs): Criteria(configs){};
+    explicit EntryCriteria(const std::vector<IndicatorConfig> &configs): Criteria(configs){};
 
-    shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) const override;
+    std::shared_ptr<bool[]> reduce(int num_bars, const std::vector<std::shared_ptr<bool []>> &trig_outputs) const override;
 
     static EntryCriteria generate(int num_indicators, double exploration_prob=0.5);
 
 };
 
 struct ExitCriteria : Criteria {
-    explicit ExitCriteria(const vector<IndicatorConfig> &configs): Criteria(configs){};
+    explicit ExitCriteria(const std::vector<IndicatorConfig> &configs): Criteria(configs){};
 
-    shared_ptr<bool[]> reduce(int num_bars, const vector<shared_ptr<bool []>> &trig_outputs) const override;
+    std::shared_ptr<bool[]> reduce(int num_bars, const std::vector<std::shared_ptr<bool []>> &trig_outputs) const override;
 
     static ExitCriteria generate(int num_indicators, double exploration_prob=0.5);
 

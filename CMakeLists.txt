@@ -35,6 +35,14 @@ endif()
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -lpthread -std=c++17 -std=gnu++17")
 
+#set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG}")
+
+
+#
+#set(CMAKE_XCODE_GENERATE_SCHEME ON)
+#set(CMAKE_XCODE_SCHEME_ADDRESS_SANITIZER ON)
+#set(CMAKE_XCODE_SCHEME_ADDRESS_SANITIZER_USE_AFTER_RETURN ON)
+
 
 file(GLOB all_includes
         "include/*.h"
@@ -46,8 +54,16 @@ file(GLOB all_includes
         "*.cpp"
         )
 
-add_executable(cryptonite ${all_includes})
-target_link_libraries(cryptonite CIndicators fort cpr::cpr)
+#find_package(Boost REQUIRED)
+#include_directories(${Boost_INCLUDE_DIRS})
+#include_directories( ${all_includes})
+include_directories(${cpr_SOURCE_DIR}/include)
+include_directories(${cpr_BINARY_DIR}/include)
+include_directories(include)
+
+add_executable(cryptonite ${all_includes} src/file_handler.cpp src/file_handler.h)
+#target_link_libraries(cryptonite PRIVATE CIndicators fort cpr::cpr binapi ${Boost_LIBRARIES})
+target_link_libraries(cryptonite PRIVATE CIndicators fort cpr::cpr)
 
 #target_link_libraries(cryptonite PUBLIC CIndicators
 #        PRIVATE ftxui::screen

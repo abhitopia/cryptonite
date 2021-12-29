@@ -13,7 +13,7 @@ namespace CIndicator{
         num_outputs = info->outputs;
     }
 
-    vector<output_type> Function::operator()(int input_len, const initializer_list<shared_ptr<double[]>> &inputs, initializer_list<double> params) {
+    std::vector<output_type> Function::operator()(int input_len, const std::initializer_list<std::shared_ptr<double[]>> &inputs, std::initializer_list<double> params) {
 
         if (num_params > 0 && params.size() == 0 || num_params == 0 && params.size() > 0 || num_inputs != inputs.size()){
             throw std::invalid_argument("Params cannot be empty");
@@ -51,9 +51,9 @@ namespace CIndicator{
         }
 
         TI_REAL *c_outputs[TI_MAXINDPARAMS];
-        vector<output_type> outputs{};
+        std::vector<output_type> outputs{};
         for (int i = 0; i < num_outputs; i++) {
-            outputs.push_back(shared_ptr<double[]>{new double[input_len]});
+            outputs.push_back(std::shared_ptr<double[]>{new double[input_len]});
             for(int j=0; j < (input_len - min_input_len) + delta; j++){
                 outputs[i][j] = dNaN;
             }

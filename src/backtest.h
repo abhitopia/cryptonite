@@ -10,10 +10,10 @@
 #include "metrics.h"
 
 struct Signal {
-    shared_ptr<bool[]> shouldLongEnter;
-    shared_ptr<bool[]> shouldShortEnter;
-    shared_ptr<bool[]> shouldLongExit;
-    shared_ptr<bool[]> shouldShortExit;
+    std::shared_ptr<bool[]> shouldLongEnter;
+    std::shared_ptr<bool[]> shouldShortEnter;
+    std::shared_ptr<bool[]> shouldLongExit;
+    std::shared_ptr<bool[]> shouldShortExit;
 
     int max_possible_entries(int numBars){
         int maxEntries = 0;
@@ -74,8 +74,8 @@ struct StoppingCriteria {
 };
 
 struct Backtest {
-    vector<Equity> equityCurve{};
-    vector<Trade> trades{};
+    std::vector<Equity> equityCurve{};
+    std::vector<Trade> trades{};
     Metrics metrics{};
 
     bool hasActiveTrade(){

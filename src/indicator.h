@@ -23,24 +23,24 @@
 using json = nlohmann::json;
 
 
-typedef shared_ptr<double[]> spda_t;
+typedef std::shared_ptr<double[]> spda_t;
 using namespace CIndicator;
 class Indicator;
 
 struct IndicatorConfig{
 //    Trigger *trigger;
-    shared_ptr<Trigger> trigger{nullptr};
-    unordered_map<string, double> params{};
+    std::shared_ptr<Trigger> trigger{nullptr};
+    std::unordered_map<std::string, double> params{};
     Indicator* indicator;
 
     IndicatorConfig(){};
-    IndicatorConfig(shared_ptr<Trigger> trigger, const unordered_map<string, double> &params, Indicator* indicator){
+    IndicatorConfig(std::shared_ptr<Trigger> trigger, const std::unordered_map<std::string, double> &params, Indicator* indicator){
         this->trigger.swap(trigger);
         this->indicator = indicator;
         this->params = params;
     }
     json toJson();
-    shared_ptr<bool[]> compute(const Dataset &dataset, bool contra_trigger = false);
+    std::shared_ptr<bool[]> compute(const Dataset &dataset, bool contra_trigger = false);
 };
 
 enum MAMethod { WMA, EMA, SMA, SSMA};
@@ -56,16 +56,16 @@ spda_t rolling_sum(int num_bars, spda_t source, int period);
 
 class Indicator {
 protected:
-    string name{};
-    unordered_map<string, double> defaults{};
-    vector<shared_ptr<Trigger>> triggers{};
+    std::string name{};
+    std::unordered_map<std::string, double> defaults{};
+    std::vector<std::shared_ptr<Trigger>> triggers{};
     double min_level{dNaN};
     double max_level{dNaN};
 
 public:
-    virtual unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) = 0;
+    virtual std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) = 0;
     IndicatorConfig generate_config(double exploration_prob=0.5);
-    unordered_map<string, double> get_random_params(double exploration_prob=0.5);
+    std::unordered_map<std::string, double> get_random_params(double exploration_prob=0.5);
     json toJson();
     spda_t get_source(const Dataset &dataset, ApplyTo apply_to);
     spda_t apply_ma(int num_bars, double period, spda_t source, MAMethod ma_method);
@@ -93,7 +93,7 @@ public:
 
     };
 
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 
 };
 
@@ -104,7 +104,7 @@ public:
         triggers = riseFallTriggers("value") +
                    directionChangeTriggers("value");
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 
 };
 
@@ -121,7 +121,7 @@ public:
         defaults["period"] =  14;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 class Alligator : public Indicator {
@@ -144,7 +144,7 @@ public:
         defaults["apply_to"] = (double) ApplyTo::MEDIAN;
         defaults["ma_method"] = (double) MAMethod::SSMA;
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -160,7 +160,7 @@ public:
         defaults["period"] =  14;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -176,7 +176,7 @@ public:
         defaults["period"] =  13;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 class BullsPower : public Indicator {
@@ -191,7 +191,7 @@ public:
         defaults["period"] =  13;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -201,14 +201,14 @@ public:
         name="BollingerBands";
         triggers = crossingTriggers("bar", "upper") +
                    crossingTriggers("bar", "lower") +
-                   shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
-                   shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
+                   std::shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
+                   std::shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
 
         defaults["period"] =  20;
         defaults["deviation"] =  2.0;
         defaults["apply_to"] = (double) ApplyTo::CLOSE;
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 class CommodityChannelIndex : public Indicator {
@@ -224,7 +224,7 @@ public:
         defaults["apply_to"] = (double) ApplyTo::TYPICAL;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -240,7 +240,7 @@ public:
         defaults["period"] =  14;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 class DirectionalIndicators : public Indicator {
@@ -252,7 +252,7 @@ public:
         defaults["period"] =  10;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 class DonchianChannel : public Indicator {
@@ -261,12 +261,12 @@ public:
         name="DonchianChannel";
         triggers = crossingTriggers("bar", "upper") +
                    crossingTriggers("bar", "lower") +
-                   shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
-                   shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
+                   std::shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
+                   std::shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
         defaults["period"] =  10;
         
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -276,15 +276,15 @@ public:
         name="Envelopes";
         triggers = crossingTriggers("bar", "upper") +
                    crossingTriggers("bar", "lower") +
-                   shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
-                   shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
+                   std::shared_ptr<Trigger>(new HigherThan{"bar", "upper"}) +
+                   std::shared_ptr<Trigger>(new LowerThan{"bar", "lower"});
 
         defaults["period"] = 14;
         defaults["deviation_pct"] = 10;
         defaults["ma_method"] = MAMethod::SMA;
         defaults["apply_to"] = ApplyTo::CLOSE;
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -300,7 +300,7 @@ public:
         defaults["period"] =  13;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -318,7 +318,7 @@ public:
         defaults["apply_to"] = ApplyTo::CLOSE;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
     bool validate_config(IndicatorConfig &config) override;
 
 };
@@ -335,7 +335,7 @@ public:
         defaults["signal_period"] = 9;
         defaults["apply_to"] = ApplyTo::CLOSE;
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
     bool validate_config(IndicatorConfig &config) override;
 };
 
@@ -353,7 +353,7 @@ public:
         defaults["apply_to"] = ApplyTo::CLOSE;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -368,7 +368,7 @@ public:
         defaults["period"] = 14.0;
         defaults["level"] = 20.0;
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -386,7 +386,7 @@ public:
         defaults["apply_to"] = ApplyTo::CLOSE;
         
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -404,7 +404,7 @@ public:
         defaults["apply_to"] = ApplyTo::CLOSE;
         defaults["level"] = 0.0;
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
     bool validate_config(IndicatorConfig &config) override;
 
 };
@@ -420,7 +420,7 @@ public:
         defaults["slow_period"] = 26;
         defaults["ma_method"] = MAMethod::SMA;
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -431,7 +431,7 @@ public:
         triggers = riseFallTriggers("value") +
                    directionChangeTriggers("value");
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -448,7 +448,7 @@ public:
         defaults["level"] = 30.0;
         
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -464,7 +464,7 @@ public:
         defaults["level"] = 0.0;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -477,7 +477,7 @@ public:
         defaults["period"] = 10;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -494,7 +494,7 @@ public:
         defaults["apply_to"] = ApplyTo::CLOSE;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -512,7 +512,7 @@ public:
         defaults["level"] = 20;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -527,7 +527,7 @@ public:
         defaults["pct_d_period"] = 3;
         
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -542,7 +542,7 @@ public:
         defaults["level"] = 1000;
         
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -558,7 +558,7 @@ public:
         defaults["period"] = 14;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -571,7 +571,7 @@ public:
         defaults["consecutive_period"] = 2;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
 
@@ -584,10 +584,10 @@ public:
         defaults["min_wick_pct"] = 30.0;
 
     }
-    unordered_map<string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
+    std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) override;
 };
 
-extern vector<std::shared_ptr<Indicator>> Indicators;
+extern std::vector<std::shared_ptr<Indicator>> Indicators;
 
 
 void setup(const Dataset &dataset, int seed=-1);

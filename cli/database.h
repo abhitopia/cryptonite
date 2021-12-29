@@ -14,13 +14,13 @@
 
 using json = nlohmann::json;
 
-using namespace std;
+//using namespace std;
 namespace fs = std::filesystem;
 
 class Database {
     fs::path dbPath{};
 public:
-    Database(string path){
+    Database(std::string path){
         dbPath = fs::path(path);
     }
     void writeDB(json jsonDB);

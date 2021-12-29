@@ -7,14 +7,14 @@
 #include "../include/indicators/cindicators.h"
 #include "constants.h"
 #include <memory>
+#include <cmath>
 #include <vector>
 #include <stdexcept>
 
 
-using namespace std;
 
 namespace CIndicator{
-    typedef shared_ptr<double[]> output_type;
+    typedef std::shared_ptr<double[]> output_type;
 
     struct Function {
         const ti_indicator_info *info{nullptr};
@@ -23,8 +23,8 @@ namespace CIndicator{
         int num_outputs{};
 
         Function(int idx);
-        vector<output_type> operator()(int input_len, const initializer_list<shared_ptr<double[]>> &inputs,
-                                       initializer_list<double> params= {});
+        std::vector<output_type> operator()(int input_len, const std::initializer_list<std::shared_ptr<double[]>> &inputs,
+                                       std::initializer_list<double> params= {});
     };
 
     extern Function abs;
@@ -47,7 +47,7 @@ namespace CIndicator{
     extern Function cci;
     extern Function ceil;
     extern Function cmo;
-    extern Function cos;
+//    extern Function cos;   // conflicts with binapi
     extern Function cosh;
     extern Function crossany;
     extern Function crossover;
@@ -97,10 +97,10 @@ namespace CIndicator{
     extern Function rocr;
     extern Function round;
     extern Function rsi;
-    extern Function sin;
+//    extern Function sin;   // conflicts with binapi
     extern Function sinh;
     extern Function sma;
-    extern Function sqrt;
+//    extern Function sqrt;   // conflicts with binapi
     extern Function stddev;
     extern Function stderr;
     extern Function stoch;

@@ -6,11 +6,11 @@
 
 
 
-shared_ptr<bool[]> Criteria::apply(const Dataset &dataset, bool contra) const {
+std::shared_ptr<bool[]> Criteria::apply(const Dataset &dataset, bool contra) const {
     int num_bars = dataset.num_bars;
-    vector<shared_ptr<bool[]>> trig_outputs{};
+    std::vector<std::shared_ptr<bool[]>> trig_outputs{};
     for (int i=0; i<configs.size(); i++){
-        trig_outputs.push_back(shared_ptr<bool[]>{nullptr});
+        trig_outputs.push_back(std::shared_ptr<bool[]>{nullptr});
     }
 
 #pragma omp parallel for default(none) shared(trig_outputs, dataset, contra, configs)
@@ -22,17 +22,17 @@ shared_ptr<bool[]> Criteria::apply(const Dataset &dataset, bool contra) const {
     return this->reduce(num_bars, trig_outputs);
 }
 
-vector<IndicatorConfig> Criteria::generate_configs(int num_indicators, double exploration_prob) {
+std::vector<IndicatorConfig> Criteria::generate_configs(int num_indicators, double exploration_prob) {
     int n_indicators = Indicators.size();
-    vector<IndicatorConfig> configs{};
+    std::vector<IndicatorConfig> configs{};
     for(int i=0; i<num_indicators;i++){
         configs.push_back(Indicators[cryptonite::randint(0, n_indicators)]->generate_config(exploration_prob));
     }
     return configs;
 }
 
-shared_ptr<bool[]> EntryCriteria::reduce(int num_bars, const vector<shared_ptr<bool[]>> &trig_outputs) const {
-    shared_ptr<bool[]> result{new bool [num_bars]};
+std::shared_ptr<bool[]> EntryCriteria::reduce(int num_bars, const std::vector<std::shared_ptr<bool[]>> &trig_outputs) const {
+    std::shared_ptr<bool[]> result{new bool [num_bars]};
 
 #pragma omp parallel for default(none) shared(result, num_bars, trig_outputs)
     for (int bar=0; bar < num_bars; bar++){
@@ -56,8 +56,8 @@ json Criteria::toJson() {
     return j;
 }
 
-shared_ptr<bool[]> ExitCriteria::reduce(int num_bars, const vector<shared_ptr<bool[]>> &trig_outputs) const {
-    shared_ptr<bool[]> result{new bool [num_bars]};
+std::shared_ptr<bool[]> ExitCriteria::reduce(int num_bars, const std::vector<std::shared_ptr<bool[]>> &trig_outputs) const {
+    std::shared_ptr<bool[]> result{new bool [num_bars]};
 
     #pragma omp parallel for default(none) shared(result, num_bars, trig_outputs)
     for (int bar=0; bar < num_bars; bar++){

@@ -9,21 +9,19 @@
 #include <memory>
 #include "function.h"
 
-using namespace std;
-
 class Dataset {
 public:
     int num_bars{};
-    shared_ptr<int[]> timestamp{nullptr};
-    shared_ptr<double[]> open{nullptr};
-    shared_ptr<double[]> high{nullptr};
-    shared_ptr<double[]> low{nullptr};
-    shared_ptr<double[]> close{nullptr};
-    shared_ptr<double[]> volume{nullptr};
-    shared_ptr<double[]> median{nullptr};
-    shared_ptr<double[]> typical{nullptr};
-    shared_ptr<double[]> weighted{nullptr};
-    shared_ptr<double[]> zero{nullptr};
+    std::shared_ptr<int[]> timestamp{nullptr};
+    std::shared_ptr<double[]> open{nullptr};
+    std::shared_ptr<double[]> high{nullptr};
+    std::shared_ptr<double[]> low{nullptr};
+    std::shared_ptr<double[]> close{nullptr};
+    std::shared_ptr<double[]> volume{nullptr};
+    std::shared_ptr<double[]> median{nullptr};
+    std::shared_ptr<double[]> typical{nullptr};
+    std::shared_ptr<double[]> weighted{nullptr};
+    std::shared_ptr<double[]> zero{nullptr};
 
     Dataset() = delete;
     Dataset(int num_bars, int *timestamp, double *open, double *high, double *low, double *close, double *volume);

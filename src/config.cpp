@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-string policyToString(Policy policy) {
+std::string policyToString(Policy policy) {
     switch(policy){
         case ALWAYS: return "always";
         case NEVER: return "never";
@@ -12,7 +12,7 @@ string policyToString(Policy policy) {
     }
 }
 
-string slTypeToString(SLType sl_type) {
+std::string slTypeToString(SLType sl_type) {
     switch(sl_type){
         case FIXED: return "fixed";
         case TRAILING: return "trailing";

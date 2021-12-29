@@ -8,7 +8,6 @@
 
 
 using namespace io;
-using namespace std;
 using namespace date;
 using namespace std::chrono;
 
@@ -22,12 +21,12 @@ Dataset Dataset::from_csv(std::string filename) {
     int tp_seconds{}, num_rows{0};
     std::istringstream t_stream{};
 
-    vector<int> timestamps{};
-    vector<double> opens{};
-    vector<double> highs{};
-    vector<double> lows{};
-    vector<double> closes{};
-    vector<double> volumes{};
+    std::vector<int> timestamps{};
+    std::vector<double> opens{};
+    std::vector<double> highs{};
+    std::vector<double> lows{};
+    std::vector<double> closes{};
+    std::vector<double> volumes{};
     date::sys_seconds tp;
 
     while(csv.read_row(timestamp, open, high, low, close, volume)){

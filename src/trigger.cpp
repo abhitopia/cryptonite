@@ -3,7 +3,6 @@
 //
 
 #include "trigger.h"
-using namespace std;
 
 series_b Rises::compute(const int &len, series_d &comparand) {
     series_b result{new bool[len]};
@@ -14,8 +13,8 @@ series_b Rises::compute(const int &len, series_d &comparand) {
     return result;
 }
 
-shared_ptr<Trigger> Rises::get_contra() {
-    return shared_ptr<Trigger>{new Falls(_comparand)};
+std::shared_ptr<Trigger> Rises::get_contra() {
+    return std::shared_ptr<Trigger>{new Falls(_comparand)};
 }
 
 series_b Falls::compute(const int &len, series_d &comparand) {
@@ -28,8 +27,8 @@ series_b Falls::compute(const int &len, series_d &comparand) {
     return result;
 }
 
-shared_ptr<Trigger> Falls::get_contra() {
-    return shared_ptr<Trigger>{new Rises(_comparand)};
+std::shared_ptr<Trigger> Falls::get_contra() {
+    return std::shared_ptr<Trigger>{new Rises(_comparand)};
 }
 
 
@@ -44,8 +43,8 @@ series_b ChangesDirectionUpward::compute(const int &len, series_d &comparand) {
     return result;
 }
 
-shared_ptr<Trigger> ChangesDirectionUpward::get_contra() {
-    return shared_ptr<Trigger>{new ChangesDirectionDownward(_comparand)};
+std::shared_ptr<Trigger> ChangesDirectionUpward::get_contra() {
+    return std::shared_ptr<Trigger>{new ChangesDirectionDownward(_comparand)};
 }
 
 series_b ChangesDirectionDownward::compute(const int &len, series_d &comparand) {
@@ -59,8 +58,8 @@ series_b ChangesDirectionDownward::compute(const int &len, series_d &comparand) 
     return result;
 }
 
-shared_ptr<Trigger> ChangesDirectionDownward::get_contra() {
-    return shared_ptr<Trigger>{new ChangesDirectionUpward(_comparand)};
+std::shared_ptr<Trigger> ChangesDirectionDownward::get_contra() {
+    return std::shared_ptr<Trigger>{new ChangesDirectionUpward(_comparand)};
 }
 
 series_b HigherThan::compute(const int &len, series_d &comparand, series_d &comparator) {
@@ -81,8 +80,8 @@ series_b HigherThan::compute(const int &len, series_d &comparand, double &compar
     return result;
 }
 
-shared_ptr<Trigger> HigherThan::get_contra() {
-    return shared_ptr<Trigger>{new LowerThan(_comparand, _comparator)};
+std::shared_ptr<Trigger> HigherThan::get_contra() {
+    return std::shared_ptr<Trigger>{new LowerThan(_comparand, _comparator)};
 }
 
 series_b LowerThan::compute(const int &len, series_d &comparand, double &comparator) {
@@ -103,8 +102,8 @@ series_b LowerThan::compute(const int &len, series_d &comparand, series_d &compa
     return result;
 }
 
-shared_ptr<Trigger> LowerThan::get_contra() {
-    return shared_ptr<Trigger>{new HigherThan(_comparand, _comparator)};
+std::shared_ptr<Trigger> LowerThan::get_contra() {
+    return std::shared_ptr<Trigger>{new HigherThan(_comparand, _comparator)};
 }
 
 series_b CrossesUpward::compute(const int &len, series_d &comparand, series_d &comparator) {
@@ -125,8 +124,8 @@ series_b CrossesUpward::compute(const int &len, series_d &comparand, double &com
     return result;
 }
 
-shared_ptr<Trigger> CrossesUpward::get_contra() {
-    return shared_ptr<Trigger>{new CrossesDownward(_comparand, _comparator)};
+std::shared_ptr<Trigger> CrossesUpward::get_contra() {
+    return std::shared_ptr<Trigger>{new CrossesDownward(_comparand, _comparator)};
 }
 
 
@@ -148,47 +147,47 @@ series_b CrossesDownward::compute(const int &len, series_d &comparand, double &c
     return result;
 }
 
-shared_ptr<Trigger> CrossesDownward::get_contra() {
-    return shared_ptr<Trigger>{new CrossesUpward(_comparand, _comparator)};
+std::shared_ptr<Trigger> CrossesDownward::get_contra() {
+    return std::shared_ptr<Trigger>{new CrossesUpward(_comparand, _comparator)};
 }
 
 
-vector<shared_ptr<Trigger>> higherLowerThanTriggers(string comparand, string comparator) {
-    vector<shared_ptr<Trigger>> result;
+std::vector<std::shared_ptr<Trigger>> higherLowerThanTriggers(std::string comparand, std::string comparator) {
+    std::vector<std::shared_ptr<Trigger>> result;
     result.emplace_back(new HigherThan(comparand, comparator));
     result.emplace_back(new LowerThan(comparand, comparator));
     return result;
 }
 
-vector<shared_ptr<Trigger>> riseFallTriggers(string comparand) {
-    vector<shared_ptr<Trigger>> result;
+std::vector<std::shared_ptr<Trigger>> riseFallTriggers(std::string comparand) {
+    std::vector<std::shared_ptr<Trigger>> result;
     result.emplace_back(new Rises(comparand));
     result.emplace_back(new Falls(comparand));
     return result;
 }
 
-vector<shared_ptr<Trigger>> directionChangeTriggers(string comparand) {
-    vector<shared_ptr<Trigger>> result;
+std::vector<std::shared_ptr<Trigger>> directionChangeTriggers(std::string comparand) {
+    std::vector<std::shared_ptr<Trigger>> result;
     result.emplace_back(new ChangesDirectionUpward(comparand));
     result.emplace_back(new ChangesDirectionDownward(comparand));
     return result;
 }
 
-vector<shared_ptr<Trigger>> crossingTriggers(string comparand, string comparator) {
-    vector<shared_ptr<Trigger>> result;
+std::vector<std::shared_ptr<Trigger>> crossingTriggers(std::string comparand, std::string comparator) {
+    std::vector<std::shared_ptr<Trigger>> result;
     result.emplace_back(new CrossesUpward(comparand, comparator));
     result.emplace_back(new CrossesDownward(comparand, comparator));
     return result;
 }
 
-std::vector<shared_ptr<Trigger>> operator+(const vector<shared_ptr<Trigger>> &v1, const vector<shared_ptr<Trigger>> &v2) {
-    std::vector<shared_ptr<Trigger>> vr(std::begin(v1), std::end(v1));
+std::vector<std::shared_ptr<Trigger>> operator+(const std::vector<std::shared_ptr<Trigger>> &v1, const std::vector<std::shared_ptr<Trigger>> &v2) {
+    std::vector<std::shared_ptr<Trigger>> vr(std::begin(v1), std::end(v1));
     vr.insert(std::end(vr), std::begin(v2), std::end(v2));
     return vr;
 }
 
-std::vector<shared_ptr<Trigger>> operator+(const vector<shared_ptr<Trigger>> &v1, const shared_ptr<Trigger> &v2) {
-    std::vector<shared_ptr<Trigger>> vr(std::begin(v1), std::end(v1));
+std::vector<std::shared_ptr<Trigger>> operator+(const std::vector<std::shared_ptr<Trigger>> &v1, const std::shared_ptr<Trigger> &v2) {
+    std::vector<std::shared_ptr<Trigger>> vr(std::begin(v1), std::end(v1));
     vr.emplace_back(v2);
     return v1;
 }
@@ -198,11 +197,11 @@ bool Trigger::has_level() {
     return _comparator == "level";
 }
 
-string Trigger::getComparand() {
+std::string Trigger::getComparand() {
     return _comparand;
 }
 
-string Trigger::getComparator() {
+std::string Trigger::getComparator() {
     return _comparator;
 }
 

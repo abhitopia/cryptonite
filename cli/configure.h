@@ -20,11 +20,11 @@ constexpr unsigned int switchHash(const char* str, int h = 0)
     return !str[h] ? 5381 : (switchHash(str, h+1) * 33) ^ str[h];
 }
 
-string getTimestamp(){
+std::string getTimestamp(){
     return date::format("%F %T", std::chrono::system_clock::now());
 }
 
-using namespace std;
+//using namespace std;
 
 json cmdToJson(CLI::App* app, bool default_also){
     json j = json::object({});
@@ -109,7 +109,7 @@ public:
 };
 
 struct Configure: CryptoniteCommand {
-    shared_ptr<Database> db{nullptr};
+    std::shared_ptr<Database> db{nullptr};
     json jsonDB{};
 
     void parse() override {
@@ -126,7 +126,7 @@ struct Configure: CryptoniteCommand {
                 }
             }
             
-            string name = subcommand->get_option("name")->as<string>();
+            std::string name = subcommand->get_option("name")->as<std::string>();
             int version{-1}; // negative means default version
 
             if(subcommand->get_name() != "add"){
@@ -139,7 +139,7 @@ struct Configure: CryptoniteCommand {
             switch (switchHash(subcommand->get_name().c_str())) {
                 case switchHash("add"):
                     if(hasConfig(name, version)){
-                        cout << "Configuration `" << name << "` already exists!" << endl;
+                        std::cout << "Configuration `" << name << "` already exists!" << std::endl;
                         return;
                     }
                     config = cmdToJson(subcommand, true);
@@ -148,13 +148,13 @@ struct Configure: CryptoniteCommand {
                     break;
                 case switchHash("update"):
                     if(!hasConfig(name, version)){
-                        cout << "Configuration `" << name << "` does not exist!" << endl;
+                        std::cout << "Configuration `" << name << "` does not exist!" << std::endl;
                         return;
                     }
                     version = version <= 0 ? getDefaultVersion(name) : version;
                     config = getConfig(name, version);
                     if(!updateConfig(config, cmdToJson(subcommand, false))){
-                        cout << "No changes detected. Skipping update!" << endl;
+                        std::cout << "No changes detected. Skipping update!" << std::endl;
                         return;
                     }
                     setConfig(name, version, config);
@@ -162,13 +162,13 @@ struct Configure: CryptoniteCommand {
                     break;
                 case switchHash("version"):
                     if(!hasConfig(name, version)){
-                        string versionUsed = version < 0 ? "default" : to_string(version);
-                        cout << "Configuration `" << name << "` (version: " << versionUsed << ") does not exist!" << endl;
+                        std::string versionUsed = version < 0 ? "default" : std::to_string(version);
+                        std::cout << "Configuration `" << name << "` (version: " << versionUsed << ") does not exist!" << std::endl;
                         return;
                     }
                     if(version <= 0){
                         // get default version
-                        cout << "Default version is: " << getDefaultVersion(name) << endl;
+                        std::cout << "Default version is: " << getDefaultVersion(name) << std::endl;
                         list(name, getDefaultVersion(name), true);
                     } else {
                         setDefaultVersion(name, version);
@@ -179,16 +179,16 @@ struct Configure: CryptoniteCommand {
                 case switchHash("remove"):
                     removeAll = subcommand->get_option("--all")->as<bool>();
                     if(!hasConfig(name, version)){
-                        string versionUsed = removeAll ? "any" : (version < 0 ? "default" : to_string(version));
-                        cout << "Configuration `" << name << "` (version: " << versionUsed << ") does not exist!" << endl;
+                        std::string versionUsed = removeAll ? "any" : (version < 0 ? "default" : std::to_string(version));
+                        std::cout << "Configuration `" << name << "` (version: " << versionUsed << ") does not exist!" << std::endl;
                         return;
                     }
                     remove(name, version, removeAll);
                     break;
                 case switchHash("list"):
                     if(subcommand->get_option("name")->count() and !hasConfig(name, version)){
-                        string versionUsed = version < 0 ? "default" : to_string(version);
-                        cout << "Configuration `" << name << "` (version: " << versionUsed << ") does not exist!" << endl;
+                        std::string versionUsed = version < 0 ? "default" : std::to_string(version);
+                        std::cout << "Configuration `" << name << "` (version: " << versionUsed << ") does not exist!" << std::endl;
                         return;
                     }
                     list(name, version, subcommand->get_option("--version")->count() > 0);
@@ -200,7 +200,7 @@ struct Configure: CryptoniteCommand {
 
     void setup(CLI::App& cli_app) override {
         app = &cli_app;
-        shared_ptr<Database> dbase(new Database(app->get_option("--database")->as<string>()));
+        std::shared_ptr<Database> dbase(new Database(app->get_option("--database")->as<std::string>()));
         db.swap(dbase);
         command = app->add_subcommand("config", "For management of configurations.");
         command->require_subcommand(1);
@@ -225,7 +225,7 @@ struct Configure: CryptoniteCommand {
     }
 
 private:
-    CLI::App *add_subcommand(string name, string description, bool addVersion = true, bool withEditingOptions = false,
+    CLI::App *add_subcommand(std::string name, std::string description, bool addVersion = true, bool withEditingOptions = false,
                              bool showDefaults=false) {
         CLI::App *subcommand = command->add_subcommand(name, description);
         subcommand->add_option("name", "Name of the configuration.")
@@ -269,10 +269,10 @@ private:
 
 
         // Trade Size
-        string defaultBidirectionalPolicy = policyToString(config.tradeSizeGenConfig.bidirectionalTradePolicy);
-        string defaultFixedSizePolicy = policyToString(config.tradeSizeGenConfig.fixedTradeSizePolicy);
-        string defaultTPPolicy = policyToString(config.takeProfitGenConfig.policy);
-        string defaultSLPolicy = policyToString(config.stopLossGenConfig.policy);
+        std::string defaultBidirectionalPolicy = policyToString(config.tradeSizeGenConfig.bidirectionalTradePolicy);
+        std::string defaultFixedSizePolicy = policyToString(config.tradeSizeGenConfig.fixedTradeSizePolicy);
+        std::string defaultTPPolicy = policyToString(config.takeProfitGenConfig.policy);
+        std::string defaultSLPolicy = policyToString(config.stopLossGenConfig.policy);
 
         subcommand->add_option("--bidirectional-policy,--bip", "Whether to generate bidirectional (long and short) strategies.")
                             ->transform(policyValidator)
@@ -312,7 +312,7 @@ private:
                 ->default_val(config.stopLossGenConfig.slMax);
 
 
-        string defaultSLType = slTypeToString(config.stopLossGenConfig.type);
+        std::string defaultSLType = slTypeToString(config.stopLossGenConfig.type);
         subcommand->add_option("--sl-type,--slt", "Type of stop-loss generated.")
                 ->transform(slTypeValidator)
                 ->default_val(defaultSLType);
@@ -336,7 +336,7 @@ private:
                                   ->default_val(config.depositConfig.maxBaseBorrow);
     }
 
-    bool hasConfig(string name, int version=-1){
+    bool hasConfig(std::string name, int version=-1){
         if(not jsonDB.contains("configs") || not jsonDB["configs"].contains(name)){
             return false;
         };
@@ -344,19 +344,19 @@ private:
         json metaConfig = jsonDB["configs"][name];
         if(version <= 0 && !metaConfig["versions"].empty()){
             return true;
-        } else if(metaConfig["versions"].contains(to_string(version))){
+        } else if(metaConfig["versions"].contains(std::to_string(version))){
             return true;
         }
         return false;
     }
 
-    json getConfig(string name, int version=-1) {
+    json getConfig(std::string name, int version=-1) {
         json metaConfig = jsonDB["configs"][name];
         version = version <= 0 ? getDefaultVersion(name) : version;
-        return metaConfig["versions"][to_string(version)]["content"];
+        return metaConfig["versions"][std::to_string(version)]["content"];
     }
 
-    void setConfig(string name, int parentVersion, json content){
+    void setConfig(std::string name, int parentVersion, json content){
         if(not jsonDB.contains("configs")){
             jsonDB["configs"] = json::object({});
         }
@@ -381,20 +381,20 @@ private:
             nextVersion = std::max(nextVersion, atoi(configVersion.c_str()) + 1);
         }
         configContainer["parentVersion"] = parentVersion;
-        metaConfig["versions"][to_string(nextVersion)] = configContainer;
+        metaConfig["versions"][std::to_string(nextVersion)] = configContainer;
         metaConfig["defaultVersion"] = nextVersion;
         return;
     }
 
-    int getDefaultVersion(string name){
+    int getDefaultVersion(std::string name){
         return jsonDB["configs"][name]["defaultVersion"].get<int>();
     }
 
-    void setDefaultVersion(string name, int version){
+    void setDefaultVersion(std::string name, int version){
         jsonDB["configs"][name]["defaultVersion"] = version;
     }
 
-    int getLastVersion(string name){
+    int getLastVersion(std::string name){
         json metaConfig = jsonDB["configs"][name];
         int lastVersion = -1;
         for(auto& [version, _]: metaConfig["versions"].items()){
@@ -403,7 +403,7 @@ private:
         return lastVersion;
     }
 
-    void remove(string name, int version, bool all=false){
+    void remove(std::string name, int version, bool all=false){
         if(all){
             jsonDB["configs"].erase(name);
             return;
@@ -411,7 +411,7 @@ private:
 
         version = version <= 0 ? getDefaultVersion(name) : version;
         int parentVersion = jsonDB["configs"][name]["parentVersion"].get<int>();
-        jsonDB["configs"][name].erase(to_string(version));
+        jsonDB["configs"][name].erase(std::to_string(version));
 
         if(parentVersion < 0){
             jsonDB["configs"].erase(name);
@@ -434,7 +434,7 @@ private:
         return valueUpdated;
     }
 
-    void list(string name, int version, bool useVersion=false){
+    void list(std::string name, int version, bool useVersion=false){
         fort::char_table table;
         table.set_cell_text_align(fort::text_align::center);
         table.set_border_style(FT_BOLD_STYLE);
@@ -445,7 +445,7 @@ private:
             table <<  fort::header  << "Configuration" << fort::endr;
             table << fort::header << "Configuration" << "Default Version" << "Number of Versions" << "Last Updated"  << fort::endr;
             for(auto& [name, metaConfig]: jsonDB["configs"].items()){
-                string lastUpdated = metaConfig["versions"][to_string(getLastVersion(name))]["createdAt"].get<string>();
+                std::string lastUpdated = metaConfig["versions"][std::to_string(getLastVersion(name))]["createdAt"].get<std::string>();
                 table << name << metaConfig["defaultVersion"] << metaConfig["versions"].size() << lastUpdated <<fort::endr << fort::separator;
             }
         } else {
@@ -457,11 +457,11 @@ private:
             json& metaConfig = jsonDB["configs"][name];
             for(auto& [configVersion, config]: metaConfig["versions"].items()){
                 if(!useVersion || version == atoi(configVersion.c_str())){
-                    string versionStr = configVersion;
+                    std::string versionStr = configVersion;
                     if(atoi(configVersion.c_str()) == defaultVersion){
                         versionStr += " (default)";
                     }
-                    table << versionStr << config["parentVersion"] << config["createdAt"].get<string>() << setw(2) << config["content"] << fort::endr << fort::separator;
+                    table << versionStr << config["parentVersion"] << config["createdAt"].get<std::string>() << std::setw(2) << config["content"] << fort::endr << fort::separator;
                 }
 
             }

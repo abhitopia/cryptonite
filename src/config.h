@@ -12,8 +12,6 @@
 
 using json = nlohmann::json;
 
-using namespace std;
-
 struct Strategy;
 
 enum Policy {
@@ -22,7 +20,7 @@ enum Policy {
     SOMETIMES = 2
 };
 
-string policyToString(Policy policy);
+std::string policyToString(Policy policy);
 
 enum SLType {
     FIXED = 0,
@@ -30,7 +28,7 @@ enum SLType {
     EITHER = 2
 };
 
-string slTypeToString(SLType sl_type);
+std::string slTypeToString(SLType sl_type);
 
 
 struct TradeSizeGenConfig {

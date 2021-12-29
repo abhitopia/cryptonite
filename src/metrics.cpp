@@ -4,15 +4,15 @@
 
 #include "metrics.h"
 
-void Metrics::compute(const Strategy &strategy, const Dataset &dataset, const vector<Equity>& equityCurve, int numberOfTrades) {
+void Metrics::compute(const Strategy &strategy, const Dataset &dataset, const std::vector<Equity>& equityCurve, int numberOfTrades) {
 
     if(equityCurve.size() == 0) return;
 
     numTrades = numberOfTrades;
     totalReturn = equityCurve.back().totalInQuote / equityCurve[0].totalInQuote - 1.0;
 
-    shared_ptr<double[]> cumProdReturns(new double [dataset.num_bars]);
-    shared_ptr<double[]> drawDown(new double [dataset.num_bars]);
+    std::shared_ptr<double[]> cumProdReturns(new double [dataset.num_bars]);
+    std::shared_ptr<double[]> drawDown(new double [dataset.num_bars]);
     double cumReturnsMax = 0.0, sumProfits = 0.0, sumLosses = 0.0;
     maxDrawDown = 0.0;
     avgDrawDown = 0.0;

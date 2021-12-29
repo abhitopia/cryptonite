@@ -44,7 +44,6 @@
 
 
 #ifndef TI_SKIP_SYSTEM_HEADERS
-#include <math.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
