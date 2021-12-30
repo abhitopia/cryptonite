@@ -135,6 +135,7 @@ struct Configure: CryptoniteCommand {
                         return;
                     }
                     config = cmdToJson(subcommand, true);
+                    if(!validateConfig(config)) return;
                     setConfig(name, -1, config);
                     list(name, getDefaultVersion(name), true);
                     break;
@@ -149,6 +150,7 @@ struct Configure: CryptoniteCommand {
                         std::cout << "No changes detected. Skipping update!" << std::endl;
                         return;
                     }
+                    if(!validateConfig(config)) return;
                     setConfig(name, version, config);
                     list(name, getDefaultVersion(name), true);
                     break;
@@ -241,6 +243,36 @@ private:
         subcommand->formatter(std::make_shared<EditingOptionFormatter>(showDefault));
         subcommand->get_formatter()->column_width(app->get_formatter()->get_column_width());
         StrategyGenConfig config{};
+
+        auto intervalValidator = CLI::IsMember({intervalToString(Interval::MINUTE1),
+                                                intervalToString(Interval::MINUTE3),
+                                                intervalToString(Interval::MINUTE5),
+                                                intervalToString(Interval::MINUTE15),
+                                                intervalToString(Interval::MINUTE30),
+                                                intervalToString(Interval::HOUR1),
+                                                intervalToString(Interval::HOUR2),
+                                                intervalToString(Interval::HOUR4),
+                                                intervalToString(Interval::HOUR6),
+                                                intervalToString(Interval::HOUR8),
+                                                intervalToString(Interval::HOUR12),
+                                                intervalToString(Interval::DAY1),
+                                                intervalToString(Interval::DAY3),
+                                                intervalToString(Interval::WEEK1),
+                                                intervalToString(Interval::MONTH1)
+                                               });
+
+        subcommand->add_option("--base-asset,-b", "Base Asset eg. BTC")
+                  ->check(CLI::TypeValidator<std::string>())
+                  ->default_val("BTC");
+
+        subcommand->add_option("--quote-asset,-q", "Quote Asset eg. GBP")
+                ->check(CLI::TypeValidator<std::string>())
+                ->default_val("USDT");
+
+        subcommand->add_option("--interval,-i", "Dataset interval between bars")
+                ->transform(intervalValidator)
+                ->default_val(intervalToString(Interval::MINUTE1));
+
         subcommand->add_option("--max-entry-rules,--mnr",
                                 "Maximum number of entry rules used in generated strategies")
                 ->check(CLI::Range(1, 6))
@@ -461,7 +493,20 @@ private:
         }
 
         std::cout << table.to_string() << std::endl;
+    }
 
+
+    bool validateConfig(json& config){
+//        std::cout << std::setw(2) << config << std::endl;
+        auto info = DataSetInfo(config["base-asset"].get<std::string>(),
+                                config["quote-asset"].get<std::string>(),
+                                stringToInterval(config["interval"].get<std::string>()));
+
+        if(!info.check_valid()){
+            std::cout << "Symbol: " + info.symbol() + " not available!" << std::endl;
+            return false;
+        }
+        return true;
     }
 };
 
