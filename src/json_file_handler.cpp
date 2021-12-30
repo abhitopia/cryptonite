@@ -8,7 +8,7 @@
 void JsonFileHandler::write(std::string name, json& j) {
     auto file = fs::path(name);
 
-    if(!fs::exists(file.parent_path())){
+    if(!fs::exists(absolute(file).parent_path())){
         fs::create_directory(file.parent_path());
     }
     auto tmpFile = file.parent_path() / ("." + file.stem().string() + ".tmp");

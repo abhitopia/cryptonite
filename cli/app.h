@@ -8,7 +8,6 @@
 #include "../include/CLI11.hpp"
 #include "configure.h"
 
-//using namespace std;
 
 class CryptoniteApp {
     std::vector<std::shared_ptr<CryptoniteCommand>> commands{};

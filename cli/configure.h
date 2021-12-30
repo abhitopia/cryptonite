@@ -13,7 +13,6 @@
 #include "../include/fort/fort.hpp"
 
 #include "command.h"
-#include "database.h"
 
 constexpr unsigned int switchHash(const char* str, int h = 0)
 {
@@ -24,7 +23,6 @@ std::string getTimestamp(){
     return date::format("%F %T", std::chrono::system_clock::now());
 }
 
-//using namespace std;
 
 json cmdToJson(CLI::App* app, bool default_also){
     json j = json::object({});
@@ -109,12 +107,11 @@ public:
 };
 
 struct Configure: CryptoniteCommand {
-    std::shared_ptr<Database> db{nullptr};
     json jsonDB{};
 
     void parse() override {
         if(command->count() > 0){
-            jsonDB = db->readDB();
+            jsonDB = JsonFileHandler::read(app->get_option("--database")->as<std::string>(), true);
             if(!jsonDB.contains("configs"))
                 jsonDB["configs"] = json::object({});
 
@@ -194,14 +191,15 @@ struct Configure: CryptoniteCommand {
                     list(name, version, subcommand->get_option("--version")->count() > 0);
                     break;
             }
-            db->writeDB(jsonDB);
+
+            JsonFileHandler::write(app->get_option("--database")->as<std::string>(), jsonDB);
         }
     }
 
     void setup(CLI::App& cli_app) override {
         app = &cli_app;
-        std::shared_ptr<Database> dbase(new Database(app->get_option("--database")->as<std::string>()));
-        db.swap(dbase);
+//        std::shared_ptr<Database> dbase(new Database(app->get_option("--database")->as<std::string>()));
+//        db.swap(dbase);
         command = app->add_subcommand("config", "For management of configurations.");
         command->require_subcommand(1);
         add_subcommand("add", "Add a new configuration.", false, true, true);

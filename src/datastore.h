@@ -93,7 +93,7 @@ struct DataSetV2 {
 class DataStore {
     fs::path storePath{};
     json dataJson;
-    DataSetV2 dataset;
+    std::shared_ptr<DataSetV2> dataset;
 
     void load(){
         auto api =  BinanceAPI{};
@@ -101,7 +101,7 @@ class DataStore {
         if(fs::exists(filePath)){
             dataJson = JsonFileHandler::read(filePath.string());
         } else {
-            dataJson = api.getOHLCVdata(dataset.info.symbol(), dataset.info.interval, -1);
+            dataJson = api.getOHLCVdata(dataset->info.symbol(), dataset->info.interval, -1);
             std::cout << std::setw(2) << dataJson << dataJson.size() << std::endl;
             JsonFileHandler::write(filePath.string(), dataJson);
         }
@@ -112,8 +112,8 @@ class DataStore {
         auto api =  BinanceAPI{};
         int numUpdates = 0;
         while (isStale()){
-            long fromTimeStamp = lastTimestamp() - dataset.info.intervalInSeconds();
-            json newData = api.getOHLCVdata(dataset.info.symbol(), dataset.info.interval, fromTimeStamp);
+            long fromTimeStamp = lastTimestamp() - dataset->info.intervalInSeconds();
+            json newData = api.getOHLCVdata(dataset->info.symbol(), dataset->info.interval, fromTimeStamp);
             for(auto& row: newData) {
                 int timestamp = row[0].get<long>()/1000;
                 if(timestamp > lastTimestamp()){
@@ -137,8 +137,8 @@ class DataStore {
         long timestamp;
         for(auto& row: dataJson){
             timestamp = row[0].get<long>()/1000;
-            if(dataset.timestamp->size() > 0){
-                long lastTimeStep = dataset.timestamp->back();
+            if(dataset->timestamp->size() > 0){
+                long lastTimeStep = dataset->timestamp->back();
                 if(timestamp < lastTimeStep){
                     continue;
                 }
@@ -148,7 +148,7 @@ class DataStore {
             low = atof(row[3].get<std::string>().c_str());
             close = atof(row[4].get<std::string>().c_str());
             volume = atof(row[5].get<std::string>().c_str());
-            dataset.add(timestamp, open, high, low, close, volume);
+            dataset->add(timestamp, open, high, low, close, volume);
 //            std::cout << std::setw(2) << row << std::endl;
         }
     }
@@ -159,14 +159,14 @@ class DataStore {
     }
 
     fs::path path(){
-        auto fileName = storePath / (dataset.info.symbol() + "_" + dataset.info.intervalInString() + ".json");
+        auto fileName = storePath / (dataset->info.symbol() + "_" + dataset->info.intervalInString() + ".json");
         return fileName;
     }
 
     bool isStale(){
         const auto p1 = std::chrono::system_clock::now();
         long timeStampNow = std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count();
-        int intervalSeconds = dataset.info.intervalInSeconds();
+        int intervalSeconds = dataset->info.intervalInSeconds();
         return lastTimestamp() < timeStampNow - intervalSeconds;
     }
 
@@ -175,7 +175,7 @@ class DataStore {
     }
 
     int nextUpdateAt(){
-        return lastTimestamp() + dataset.info.intervalInSeconds();
+        return lastTimestamp() + dataset->info.intervalInSeconds();
     }
 
     void getDataset(){
@@ -183,7 +183,7 @@ class DataStore {
     }
 
 public:
-    DataStore(DataSetInfo info, std::string storePath): dataset(info){
+    DataStore(DataSetInfo info, std::string storePath): dataset(std::make_shared<DataSetV2>(info)){
         this->storePath = fs::path(storePath);
         load();
     }
