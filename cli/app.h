@@ -7,6 +7,7 @@
 
 #include "../include/CLI11.hpp"
 #include "configure.h"
+#include "data.h"
 
 
 class CryptoniteApp {
@@ -21,10 +22,17 @@ public:
         app.set_help_all_flag("--help-all", "Expand all help");
         app.require_subcommand(1); // require one subcommand, either edit, generate, optimize
         std::string databasePath = "cryptonite.db";
+        std::string dataStorePath = "datastore";
         app.add_option("--database, -d", databasePath, "Path to Cryptonite database file, created if non-existent.")
                 ->capture_default_str()
                 ->check(CLI::NonexistentPath | CLI::ExistingPath)
                 ->envname("CRYPTONITE_DB");
+
+        app.add_option("--datastore, -s", dataStorePath, "Path to data folder that contains datasets, created if non-existent.")
+                ->capture_default_str()
+                ->check(CLI::NonexistentPath | CLI::ExistingPath)
+                ->envname("CRYPTONITE_DS");
+
     }
 
     void addCommand(std::shared_ptr<CryptoniteCommand> command){
@@ -45,6 +53,8 @@ public:
 
     int run(int argc, char **argv){
         addCommand(std::shared_ptr<CryptoniteCommand>{new Configure});
+        addCommand(std::shared_ptr<CryptoniteCommand>{new Data});
+
         setup();
 
         CLI11_PARSE(app, argc, argv);

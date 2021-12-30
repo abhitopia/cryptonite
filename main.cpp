@@ -50,8 +50,8 @@ int main(int argc, char **argv) {
 
     cpr::Response r = cpr::Get(cpr::Url{"http://www.httpbin.org/get"});
 
-    auto info = DataSetInfo("ETH", "GBP",  Interval::MINUTE3);
-    auto ds = DataStore(info, "datastore");
+//    auto info = DataSetInfo("ETH", "GBP",  Interval::MINUTE3);
+//    auto ds = DataStore(info, "datastore");
     return app.run(argc,argv);
 }
 

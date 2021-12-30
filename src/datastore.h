@@ -10,6 +10,8 @@
 #include <iostream>
 #include "binance.h"
 #include "json_file_handler.h"
+#include "../include/progressbar.hpp"
+
 
 
 namespace fs = std::filesystem;
@@ -23,7 +25,6 @@ struct DataSetInfo {
         this->baseAsset = baseAsset;
         this->quoteAsset = quoteAsset;
         this->interval = interval;
-        validate();
     }
 
     std::string symbol(){
@@ -38,8 +39,24 @@ struct DataSetInfo {
         return intervalToString(interval);
     }
 
-    void validate(){
+    bool check_valid(){
         // check if symbol exists using Binance API and that trading is permitted.
+        auto api =  BinanceAPI{};
+        auto exchangeInfo = api.getExchangeInfo();
+        std::string symbol = this->symbol();
+        for(auto& symbolInfo: exchangeInfo["symbols"]){
+            if(symbolInfo["symbol"].get<std::string>() == symbol){
+                if(symbolInfo["baseAsset"].get<std::string>() == baseAsset and symbolInfo["quoteAsset"].get<std::string>() == quoteAsset){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    json exchangeInfo(){
+        auto api =  BinanceAPI{};
+        return api.getExchangeInfo(this->symbol());
     }
 };
 
@@ -102,7 +119,6 @@ class DataStore {
             dataJson = JsonFileHandler::read(filePath.string());
         } else {
             dataJson = api.getOHLCVdata(dataset->info.symbol(), dataset->info.interval, -1);
-            std::cout << std::setw(2) << dataJson << dataJson.size() << std::endl;
             JsonFileHandler::write(filePath.string(), dataJson);
         }
         update();
@@ -111,12 +127,26 @@ class DataStore {
     void updateDataJson(){
         auto api =  BinanceAPI{};
         int numUpdates = 0;
+
+        long timeStampNow = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        int numBars = (timeStampNow - lastTimestamp())/dataset->info.intervalInSeconds();
+
+
+        progressbar bar(numBars);
+        bool showBar = numBars > 2000;
+        if(showBar){
+            std::cout << "Downloading data for symbol: " << dataset->info.symbol() << std::endl;
+        }
+
         while (isStale()){
             long fromTimeStamp = lastTimestamp() - dataset->info.intervalInSeconds();
             json newData = api.getOHLCVdata(dataset->info.symbol(), dataset->info.interval, fromTimeStamp);
             for(auto& row: newData) {
                 int timestamp = row[0].get<long>()/1000;
                 if(timestamp > lastTimestamp()){
+                    if(showBar){
+                        bar.update();
+                    }
                     dataJson.push_back(row);
                     numUpdates += 1;
                 }
@@ -149,7 +179,6 @@ class DataStore {
             close = atof(row[4].get<std::string>().c_str());
             volume = atof(row[5].get<std::string>().c_str());
             dataset->add(timestamp, open, high, low, close, volume);
-//            std::cout << std::setw(2) << row << std::endl;
         }
     }
 

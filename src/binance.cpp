@@ -5,6 +5,7 @@
 
 
 #include "binance.h"
+#include "constants.h"
 
 int intervalToSeconds(Interval interval) {
     switch(interval){
@@ -43,5 +44,25 @@ std::string intervalToString(Interval interval) {
         case DAY3: return "3d";
         case WEEK1: return "1w";
         case MONTH1: return "1M";
+    }
+}
+
+Interval stringToInterval(std::string text) {
+    switch(switchHash(text.c_str())){
+        case switchHash("1m"): return Interval::MINUTE1;
+        case switchHash("3m"): return Interval::MINUTE3;
+        case switchHash("5m"): return Interval::MINUTE5;
+        case switchHash("15m"): return Interval::MINUTE15;
+        case switchHash("30m"): return Interval::MINUTE30;
+        case switchHash("1h"): return Interval::HOUR1;
+        case switchHash("2h"): return Interval::HOUR2;
+        case switchHash("4h"): return Interval::HOUR4;
+        case switchHash("6h"): return Interval::HOUR6;
+        case switchHash("8h"): return Interval::HOUR8;
+        case switchHash("12h"): return Interval::HOUR12;
+        case switchHash("1d"): return Interval::DAY1;
+        case switchHash("3d"): return Interval::DAY3;
+        case switchHash("1w"): return Interval::WEEK1;
+        case switchHash("1M"): return Interval::MONTH1;
     }
 }

@@ -14,11 +14,6 @@
 
 #include "command.h"
 
-constexpr unsigned int switchHash(const char* str, int h = 0)
-{
-    return !str[h] ? 5381 : (switchHash(str, h+1) * 33) ^ str[h];
-}
-
 std::string getTimestamp(){
     return date::format("%F %T", std::chrono::system_clock::now());
 }

@@ -30,6 +30,7 @@ enum Interval {
     MONTH1 = 14
 };
 
+Interval stringToInterval(std::string text);
 std::string intervalToString(Interval interval);
 int intervalToSeconds(Interval interval);
 
