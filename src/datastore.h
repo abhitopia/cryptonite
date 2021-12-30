@@ -80,16 +80,16 @@ struct DataSetV2 {
             while(this->timestamp->back() + info.intervalInSeconds() < timestamp){
 //                std::cout << "Missing Data Expected: " <<  this->timestamp->back() + info.intervalInSeconds() << " Got: " << timestamp << std::endl;
                 double lastClose = this->close->back();
-                this->timestamp->push_back(this->timestamp->back() + info.intervalInSeconds());
-                this->open->push_back(lastClose);
-                this->high->push_back(lastClose);
-                this->low->push_back(lastClose);
-                this->close->push_back(lastClose);
-                this->volume->push_back(0.0);
-                this->median->push_back((lastClose + lastClose)/2.0);
-                this->typical->push_back((lastClose + lastClose + lastClose)/3.0);
-                this->weighted->push_back((lastClose + lastClose + 2 * lastClose)/4.0);
-                this->zero->push_back(0.0);
+                this->timestamp->emplace_back(this->timestamp->back() + info.intervalInSeconds());
+                this->open->emplace_back(lastClose);
+                this->high->emplace_back(lastClose);
+                this->low->emplace_back(lastClose);
+                this->close->emplace_back(lastClose);
+                this->volume->emplace_back(0.0);
+                this->median->emplace_back((lastClose + lastClose)/2.0);
+                this->typical->emplace_back((lastClose + lastClose + lastClose)/3.0);
+                this->weighted->emplace_back((lastClose + lastClose + 2 * lastClose)/4.0);
+                this->zero->emplace_back(0.0);
             }
 
 //            if(this->timestamp->back() + info.intervalInSeconds() != timestamp) {
@@ -97,18 +97,16 @@ struct DataSetV2 {
 //            }
         }
 
-
-
-        this->timestamp->push_back(timestamp);
-        this->open->push_back(open);
-        this->high->push_back(high);
-        this->low->push_back(low);
-        this->close->push_back(close);
-        this->volume->push_back(volume);
-        this->median->push_back((high + low)/2.0);
-        this->typical->push_back((high + low + close)/3.0);
-        this->weighted->push_back((high + low + 2 * close)/4.0);
-        this->zero->push_back(0.0);
+        this->timestamp->emplace_back(timestamp);
+        this->open->emplace_back(open);
+        this->high->emplace_back(high);
+        this->low->emplace_back(low);
+        this->close->emplace_back(close);
+        this->volume->emplace_back(volume);
+        this->median->emplace_back((high + low)/2.0);
+        this->typical->emplace_back((high + low + close)/3.0);
+        this->weighted->emplace_back((high + low + 2 * close)/4.0);
+        this->zero->emplace_back(0.0);
     }
 
     int numBars(){
@@ -123,6 +121,19 @@ struct DataSetV2 {
             }
         }
         return total;
+    }
+    
+    void reserve(int n){
+        this->timestamp->reserve(n);
+        this->open->reserve(n);
+        this->high->reserve(n);
+        this->low->reserve(n);
+        this->close->reserve(n);
+        this->volume->reserve(n);
+        this->median->reserve(n);
+        this->typical->reserve(n);
+        this->weighted->reserve(n);
+        this->zero->reserve(n);
     }
 
 };
@@ -185,6 +196,10 @@ class DataStore {
     void updateDataset(){
         double open, high, low, close, volume;
         long timestamp;
+
+        if(dataJson.size() - dataset->numBars() > 50000){
+            dataset->reserve(dataJson.size());
+        }
 
         progressbar bar(dataJson.size());
         std::cout << "Loading data for symbol: " << dataset->info.symbol() << std::endl;
