@@ -18,6 +18,7 @@
   - [x] remove show command and include in list command version
   - [x] show default version in a different color
 - [ ] Add dataset metadata to config command
-- [ ] Add datasetinfo validate
-- [ ] Check fraction valid datapoints (volume != 0.0)
+- [x] Add datasetinfo validate
 - [x] Refactor out the cli/database
+- [x] Check fraction valid datapoints (volume != 0.0)
+- [ ] May be compute the CAGR for dataset for reference. If we are doing worse, then probably not worth considering.

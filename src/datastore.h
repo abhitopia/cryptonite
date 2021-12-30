@@ -77,7 +77,7 @@ struct DataSetV2 {
 
     void add(long timestamp, double open, double high, double low, double close, double volume){
         if(this->timestamp->size() > 0){
-            while(this->timestamp->back() + info.intervalInSeconds() != timestamp){
+            while(this->timestamp->back() + info.intervalInSeconds() < timestamp){
 //                std::cout << "Missing Data Expected: " <<  this->timestamp->back() + info.intervalInSeconds() << " Got: " << timestamp << std::endl;
                 double lastClose = this->close->back();
                 this->timestamp->push_back(this->timestamp->back() + info.intervalInSeconds());
@@ -91,7 +91,13 @@ struct DataSetV2 {
                 this->weighted->push_back((lastClose + lastClose + 2 * lastClose)/4.0);
                 this->zero->push_back(0.0);
             }
+
+//            if(this->timestamp->back() + info.intervalInSeconds() != timestamp) {
+//                std::cout << "Weird Encounter, should be " <<  this->timestamp->back() + info.intervalInSeconds() << " but got " <<  timestamp;
+//            }
         }
+
+
 
         this->timestamp->push_back(timestamp);
         this->open->push_back(open);
@@ -103,6 +109,20 @@ struct DataSetV2 {
         this->typical->push_back((high + low + close)/3.0);
         this->weighted->push_back((high + low + 2 * close)/4.0);
         this->zero->push_back(0.0);
+    }
+
+    int numBars(){
+        return this->timestamp->size();
+    }
+
+    int barsWithVolume() {
+        int total = 0.0;
+        for(auto& v: *volume){
+            if(v > 0){
+                total += 1;
+            }
+        }
+        return total;
     }
 
 };
@@ -165,7 +185,12 @@ class DataStore {
     void updateDataset(){
         double open, high, low, close, volume;
         long timestamp;
+
+        progressbar bar(dataJson.size());
+        std::cout << "Loading data for symbol: " << dataset->info.symbol() << std::endl;
+
         for(auto& row: dataJson){
+            bar.update();
             timestamp = row[0].get<long>()/1000;
             if(dataset->timestamp->size() > 0){
                 long lastTimeStep = dataset->timestamp->back();
@@ -207,14 +232,16 @@ class DataStore {
         return lastTimestamp() + dataset->info.intervalInSeconds();
     }
 
-    void getDataset(){
 
-    }
 
 public:
     DataStore(DataSetInfo info, std::string storePath): dataset(std::make_shared<DataSetV2>(info)){
         this->storePath = fs::path(storePath);
         load();
+    }
+
+    std::shared_ptr<DataSetV2> getDataset(){
+        return dataset;
     }
 
 

@@ -67,7 +67,7 @@ public:
         params.Add({"limit", "1000"});
 
         if(startFrom <= 0){
-            params.Add({"startTime", std::to_string(1576746000)}); //  Corresponds to 2019-06-19 09:00:00
+            params.Add({"startTime", std::to_string(1576746000)}); //  Pretty much from the beginning, notice the missing * 1000
         } else {
             params.Add({"startTime", std::to_string(startFrom * 1000)}); //  Corresponds to 2019-06-19 09:00:00
         }
