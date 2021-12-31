@@ -88,8 +88,7 @@ struct Strategy {
              const EntryCriteria& entryCriteria,
              const ExitCriteria& exitCriteria,
              const DepositConfig& depositConfig,
-             const BrokerConfig& brokerConfig
-             );
+             const BrokerConfig& brokerConfig);
 
     static Strategy generate(const StrategyGenConfig& config);
 

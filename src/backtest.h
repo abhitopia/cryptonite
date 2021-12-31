@@ -8,6 +8,8 @@
 
 #include "strategy.h"
 #include "metrics.h"
+#include "dataset.h"
+#include "datastore.h"
 
 struct Signal {
     std::shared_ptr<bool[]> shouldLongEnter;
@@ -66,7 +68,7 @@ struct StoppingCriteria {
     int minNumTrades{10};
     double minTotalEquityFraction{0.5};
     StoppingCriteria(int minNumTrades=200, double minTotalEquityFraction=0.5){
-        assert(minNumTrades > 100 && "Minimum number of trades less than 1000 is not statistically significant");
+        assert(minNumTrades > 100 && "Minimum number of trades less than 100 is not statistically significant");
         assert(minTotalEquityFraction < 1.0 && minTotalEquityFraction > 0);
         this->minNumTrades = minNumTrades;
         this->minTotalEquityFraction = minTotalEquityFraction;
@@ -98,9 +100,21 @@ struct Backtest {
     Equity enterShort(int bar, double lastPrice, const Equity& equity, const Strategy& strategy);
     Equity exitLong(int bar, double lastPrice, const Equity& equity, const Strategy& strategy);
     Equity exitShort(int bar, double lastPrice, const Equity& equity, const Strategy& strategy);
+};
 
-    void operator()(const Strategy &strategy, const Dataset &dataset,
-            const StoppingCriteria& stoppingCriteria = StoppingCriteria{});
+struct Backtester {
+    StrategyGenConfig config;
+    Dataset dataset;
+
+    Backtester(StrategyGenConfig& config, std::string datastorePath):
+            config(config),
+            dataset(DataStore(config.dataSetConfig, datastorePath).getDataset())
+    {
+        Indicator::setup(dataset);
+
+    };
+
+    Backtest evaluate(const Strategy &strategy);
 
 };
 

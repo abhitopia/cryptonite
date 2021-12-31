@@ -7,7 +7,7 @@
 
 
 std::shared_ptr<bool[]> Criteria::apply(const Dataset &dataset, bool contra) const {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     std::vector<std::shared_ptr<bool[]>> trig_outputs{};
     for (int i=0; i<configs.size(); i++){
         trig_outputs.push_back(std::shared_ptr<bool[]>{nullptr});

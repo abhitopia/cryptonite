@@ -7,6 +7,7 @@
 
 #include "../include/CLI11.hpp"
 #include "../src/config.h"
+#include "../src/json_file_handler.h"
 #include <cmath>
 #include <map>
 #include "../include/date.h"
@@ -243,6 +244,11 @@ private:
         subcommand->formatter(std::make_shared<EditingOptionFormatter>(showDefault));
         subcommand->get_formatter()->column_width(app->get_formatter()->get_column_width());
         StrategyGenConfig config{};
+
+        subcommand->add_option("--min-num-trades,--mnt", "Minimum number of trades in the backtest.")
+                  ->check(CLI::PositiveNumber & CLI::TypeValidator<int>())
+                  ->default_val(config.acceptanceConfig.minNumTrades);
+
 
         auto intervalValidator = CLI::IsMember({intervalToString(Interval::MINUTE1),
                                                 intervalToString(Interval::MINUTE3),

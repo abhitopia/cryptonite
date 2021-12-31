@@ -79,6 +79,9 @@ public:
         }
         return false;
     }
+
+    static void setup(const Dataset& dataset, int seed=-1);
+
 };
 
 class AcceleratorOscillator: public Indicator {
@@ -590,6 +593,5 @@ public:
 extern std::vector<std::shared_ptr<Indicator>> Indicators;
 
 
-void setup(const Dataset &dataset, int seed=-1);
 
 #endif //CRYPTONITE_INDICATOR_H

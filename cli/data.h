@@ -59,14 +59,14 @@ struct Data: CryptoniteCommand {
 //            table.row(1).set_cell_bg_color(fort::color::black);
             table[0][0].set_cell_span(2);
 
-            std::uint32_t time_date_stamp = dataset->timestamp->front();
+            std::uint32_t time_date_stamp = dataset.timestamp[0];
             date::sys_seconds tp{std::chrono::seconds{time_date_stamp}};
             std::string startDate = date::format("%Y-%m-%d %I:%M:%S %p", tp);
             std::cout << std::endl;
             table <<  fort::header  << "Symbol: " + info.symbol() << fort::endr;
-            table << "Number of bars" << dataset->numBars() << fort::endr << fort::separator;
-            double pctVolume = (100.0 * dataset->barsWithVolume())/ dataset->numBars();
-            table << "Bars with volume (%)" << std::to_string(dataset->barsWithVolume()) + "  (" + std::to_string(pctVolume) + "% )"  << fort::endr << fort::separator;
+            table << "Number of bars" << dataset.numBars << fort::endr << fort::separator;
+            double pctVolume = (100.0 * dataset.barsWithVolume())/ dataset.numBars;
+            table << "Bars with volume (%)" << std::to_string(dataset.barsWithVolume()) + "  (" + std::to_string(pctVolume) + "% )"  << fort::endr << fort::separator;
             table << "Interval" << info.intervalInString() << fort::endr << fort::separator;
             table << "Start TimeStamp" << startDate << fort::endr << fort::separator;
             table << "Exchange Info" << std::setw(2) << info.exchangeInfo() << fort::endr;

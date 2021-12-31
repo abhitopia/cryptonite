@@ -132,7 +132,22 @@ struct DataSetConfig {
 };
 
 
+struct AcceptanceConfig {
+    int minNumTrades;
+    double minTotalEquityFraction;
+    AcceptanceConfig(int minNumTrades=500, double minTotalEquityFraction=0.5){
+        assert(minNumTrades >= 500 && "Minimum number of trades less than 500 is not statistically significant");
+        assert(minTotalEquityFraction < 1.0 && minTotalEquityFraction > 0);
+        this->minNumTrades = minNumTrades;
+        this->minTotalEquityFraction = minTotalEquityFraction;
+    }
+
+    json toJson();
+    static AcceptanceConfig fromJson(json j);
+};
+
 struct StrategyGenConfig {
+    AcceptanceConfig acceptanceConfig{};
     DataSetConfig dataSetConfig{};
     TradeSizeGenConfig tradeSizeGenConfig{};
     RulesGenConfig rulesGenConfig{};

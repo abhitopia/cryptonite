@@ -17,7 +17,7 @@
   - [x] add table formatting
   - [x] remove show command and include in list command version
   - [x] show default version in a different color
-- [ ] Add dataset metadata to config command
+- [x] Add dataset metadata to config command
 - [x] Add datasetinfo validate
 - [x] Refactor out the cli/database
 - [x] Check fraction valid datapoints (volume != 0.0)

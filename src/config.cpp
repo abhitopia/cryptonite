@@ -174,6 +174,7 @@ DepositConfig DepositConfig::fromJson(json j) {
 
 json StrategyGenConfig::toJson() {
     json j;
+    j["acceptanceConfig"] = acceptanceConfig.toJson();
     j["dataSetConfig"] = dataSetConfig.toJson();
     j["tradeSizeGenConfig"] = tradeSizeGenConfig.toJson();
     j["rulesGenConfig"] = rulesGenConfig.toJson();
@@ -186,6 +187,7 @@ json StrategyGenConfig::toJson() {
 
 StrategyGenConfig StrategyGenConfig::fromJson(json j) {
     auto config = StrategyGenConfig();
+    config.acceptanceConfig = AcceptanceConfig::fromJson(j["acceptanceConfig"]);
     config.dataSetConfig = DataSetConfig::fromJson(j["dataSetConfig"]);
     config.tradeSizeGenConfig = TradeSizeGenConfig::fromJson(j["tradeSizeGenConfig"]);
     config.rulesGenConfig = RulesGenConfig::fromJson(j["rulesGenConfig"]);
@@ -242,3 +244,18 @@ DataSetConfig DataSetConfig::fromJson(json j) {
                         j["quoteAsset"].get<std::string>(),
                          stringToInterval(j["interval"].get<std::string>()));
 }
+
+json AcceptanceConfig::toJson() {
+    json j;
+    j["minNumTrades"] = minNumTrades;
+    j["minTotalEquityFraction"] = minTotalEquityFraction;
+    return j;
+}
+
+AcceptanceConfig AcceptanceConfig::fromJson(json j) {
+    return AcceptanceConfig(
+            j["minNumTrades"].get<int>(),
+                    j["minTotalEquityFraction"].get<double>()
+            );
+}
+

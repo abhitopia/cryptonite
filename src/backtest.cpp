@@ -184,11 +184,13 @@ Equity Backtest::exitShort(int bar, double lastPrice, const Equity& equity, cons
 }
 
 
-void Backtest::operator()(const Strategy &strategy, const Dataset &dataset, const StoppingCriteria& stoppingCriteria) {
-
+Backtest Backtester::evaluate(const Strategy &strategy) {
+    Backtest backtest;
     Signal signal = computeSignal(strategy, dataset);
-    if (signal.max_possible_entries(dataset.num_bars) < stoppingCriteria.minNumTrades) {
-        return;
+    auto acceptanceConfig = config.acceptanceConfig;
+
+    if (signal.max_possible_entries(dataset.numBars) < acceptanceConfig.minNumTrades) {
+        return backtest;
     }
     const DepositConfig& depositConfig = strategy.depositConfig;
     const PositionOpenConfig& positionOpenConfig = strategy.positionOpenConfig;
@@ -202,10 +204,10 @@ void Backtest::operator()(const Strategy &strategy, const Dataset &dataset, cons
                                   borrowAllowance);
 
 
-    for(int bar=0; bar < dataset.num_bars; bar++){
+    for(int bar=0; bar < dataset.numBars; bar++){
         double currentPrice = dataset.open[bar];
-        if(hasActiveTrade()){
-            Trade& activeTrade = getActiveTrade();
+        if(backtest.hasActiveTrade()){
+            Trade& activeTrade = backtest.getActiveTrade();
 
             // update the stopLoss with the current price
             if(positionCloseConfig.trailingSl){
@@ -218,33 +220,34 @@ void Backtest::operator()(const Strategy &strategy, const Dataset &dataset, cons
 
             if(activeTrade.is_long()){
                 if(signal.shouldLongExit[bar] or currentPrice <= activeTrade.stopLoss){
-                    currentEquity = exitLong(bar, currentPrice, currentEquity, strategy);
+                    currentEquity = backtest.exitLong(bar, currentPrice, currentEquity, strategy);
                 }
             }else {
                 if(signal.shouldShortExit[bar] or currentPrice >= activeTrade.stopLoss){
-                    currentEquity = exitShort(bar, currentPrice, currentEquity, strategy);
+                    currentEquity = backtest.exitShort(bar, currentPrice, currentEquity, strategy);
                 }
             }
         }
 
-        if(not hasActiveTrade()){
+        if(not backtest.hasActiveTrade()){
             if(signal.shouldLongEnter[bar]){
-                currentEquity = enterLong(bar, currentPrice, currentEquity, strategy);
+                currentEquity = backtest.enterLong(bar, currentPrice, currentEquity, strategy);
             } else if(signal.shouldShortEnter[bar] and positionOpenConfig.bidirectional){
-                currentEquity = enterShort(bar, currentPrice, currentEquity, strategy);
+                currentEquity = backtest.enterShort(bar, currentPrice, currentEquity, strategy);
             }
         }
 
         currentEquity = currentEquity.getUpdatedEquity(currentPrice);
-        equityCurve.emplace_back(currentEquity);
-        if(currentEquity.totalInQuote < stoppingCriteria.minTotalEquityFraction * strategy.depositConfig.quoteDeposit ){
+        backtest.equityCurve.emplace_back(currentEquity);
+        if(currentEquity.totalInQuote < acceptanceConfig.minTotalEquityFraction * strategy.depositConfig.quoteDeposit ){
             break;
         }
     }
 
-    int numTrades = (int)trades.size();
-    if(numTrades >= stoppingCriteria.minNumTrades){
-        metrics.compute(strategy, dataset, equityCurve, numTrades);
-
+    int numTrades = (int)backtest.trades.size();
+    if(numTrades >= acceptanceConfig.minNumTrades){
+        backtest.metrics.compute(strategy, dataset, backtest.equityCurve, numTrades);
     }
+
+    return backtest;
 }

@@ -167,7 +167,7 @@ json IndicatorConfig::toJson() {
 }
 
 std::shared_ptr<bool[]> IndicatorConfig::compute(const Dataset &dataset, bool contra_trigger) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     std::unordered_map<std::string, std::shared_ptr<double[]>> output = this->indicator->compute(dataset, *this);
     std::shared_ptr<Trigger> trigger = contra_trigger ?  this->trigger->get_contra() : this-> trigger;
     std::shared_ptr<bool[]> result{nullptr};
@@ -184,24 +184,24 @@ std::shared_ptr<bool[]> IndicatorConfig::compute(const Dataset &dataset, bool co
 }
 
 std::unordered_map<std::string, spda_t> AcceleratorOscillator::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    spda_t ao = sub(dataset.num_bars, {sma(dataset.num_bars, {dataset.median}, {5.0})[0], sma(dataset.num_bars, {dataset.median}, {34.0})[0]})[0];
-    spda_t ac = sub(dataset.num_bars, {ao, sma(dataset.num_bars, {ao}, {5.0})[0]})[0];
+    spda_t ao = sub(dataset.numBars, {sma(dataset.numBars, {dataset.median}, {5.0})[0], sma(dataset.numBars, {dataset.median}, {34.0})[0]})[0];
+    spda_t ac = sub(dataset.numBars, {ao, sma(dataset.numBars, {ao}, {5.0})[0]})[0];
     std::unordered_map<std::string, spda_t> result{{"value", ac}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> AccumulationDistribution::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    std::unordered_map<std::string, spda_t> result{{"value", ad(dataset.num_bars, {dataset.high, dataset.low, dataset.close, dataset.volume})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", ad(dataset.numBars, {dataset.high, dataset.low, dataset.close, dataset.volume})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> ADX::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    std::unordered_map<std::string, spda_t> result{{"value", adx(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", adx(dataset.numBars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> Alligator::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     std::unordered_map<std::string, spda_t> result;
     auto ma_method = (MAMethod) (int) config.params.at("ma_method");
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
@@ -218,38 +218,38 @@ std::unordered_map<std::string, spda_t> Alligator::compute(const Dataset &datase
 }
 
 std::unordered_map<std::string, spda_t> AverageTrueRange::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    std::unordered_map<std::string, spda_t> result{{"value", atr(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", atr(dataset.numBars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> BearsPower::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    auto ema_val = ema(dataset.num_bars, {dataset.close}, {config.params.at("period")})[0];
-    std::unordered_map<std::string, spda_t> result{{"value", sub(dataset.num_bars, {dataset.low, ema_val})[0]}};
+    auto ema_val = ema(dataset.numBars, {dataset.close}, {config.params.at("period")})[0];
+    std::unordered_map<std::string, spda_t> result{{"value", sub(dataset.numBars, {dataset.low, ema_val})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> BullsPower::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    auto ema_val = ema(dataset.num_bars, {dataset.close}, {config.params.at("period")})[0];
-    std::unordered_map<std::string, spda_t> result{{"value", sub(dataset.num_bars, {dataset.high, ema_val})[0]}};
+    auto ema_val = ema(dataset.numBars, {dataset.close}, {config.params.at("period")})[0];
+    std::unordered_map<std::string, spda_t> result{{"value", sub(dataset.numBars, {dataset.high, ema_val})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> BollingerBands::compute(const Dataset &dataset, const IndicatorConfig &config) {
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
-    auto bbs = bbands(dataset.num_bars, {source}, {config.params.at("period"),
-                                                   config.params.at("deviation")});
+    auto bbs = bbands(dataset.numBars, {source}, {config.params.at("period"),
+                                                  config.params.at("deviation")});
     std::unordered_map<std::string, spda_t> result{{"bar", dataset.open}, {"lower", bbs[0]}, {"upper", bbs[2]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> CommodityChannelIndex::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    std::unordered_map<std::string, spda_t> result{{"value", cci(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", cci(dataset.numBars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> DeMarker::compute(const Dataset &dataset, const IndicatorConfig &config) {
     // refer: https://www.metatrader5.com/en/terminal/help/indicators/oscillators/demarker
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     auto high_i_1 = shift(num_bars, 1, dataset.high);  //  i-1
     auto low_i_1 = shift(num_bars, 1, dataset.low);  // i-1
     auto diff_high =  sub(num_bars, {dataset.high, high_i_1})[0];
@@ -264,13 +264,13 @@ std::unordered_map<std::string, spda_t> DeMarker::compute(const Dataset &dataset
 }
 
 std::unordered_map<std::string, spda_t> DirectionalIndicators::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    auto value = di(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")});
+    auto value = di(dataset.numBars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")});
     std::unordered_map<std::string, spda_t> result{{"plus", value[0]}, {"minus", value[1]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> DonchianChannel::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     std::unordered_map<std::string, spda_t> result{};
     result["bar"] = dataset.open;
     result["lower"] = CIndicator::min(num_bars, {dataset.low}, {config.params.at("period")})[0];
@@ -279,7 +279,7 @@ std::unordered_map<std::string, spda_t> DonchianChannel::compute(const Dataset &
 }
 
 std::unordered_map<std::string, spda_t> Envelopes::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     auto ma_method = (MAMethod) (int) config.params.at("ma_method");
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
     auto sma = apply_ma(num_bars, (int) config.params.at("period"), source, ma_method);
@@ -295,7 +295,7 @@ std::unordered_map<std::string, spda_t> Envelopes::compute(const Dataset &datase
 }
 
 std::unordered_map<std::string, spda_t> ForceIndex::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     auto ma_method = (MAMethod) (int) config.params.at("ma_method");
     auto ma = apply_ma(num_bars, (int) config.params.at("period"), dataset.close, ma_method);
     auto ma_i_1 = shift(num_bars, 1, ma);  //  i-1
@@ -310,7 +310,7 @@ std::unordered_map<std::string, spda_t> ForceIndex::compute(const Dataset &datas
 }
 
 std::unordered_map<std::string, spda_t> MACD::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
     auto fast_period = config.params.at("fast_period");
     auto slow_period = config.params.at("slow_period");
@@ -325,7 +325,7 @@ bool MACD::validate_config(IndicatorConfig &config) {
 }
 
 std::unordered_map<std::string, spda_t> MACDSignal::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
     auto fast_period = config.params.at("fast_period");
     auto slow_period = config.params.at("slow_period");
@@ -341,17 +341,17 @@ bool MACDSignal::validate_config(IndicatorConfig &config) {
 
 std::unordered_map<std::string, spda_t> Momentum::compute(const Dataset &dataset, const IndicatorConfig &config) {
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
-    std::unordered_map<std::string, spda_t> result{{"value", mom(dataset.num_bars, {source}, {config.params.at("period")})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", mom(dataset.numBars, {source}, {config.params.at("period")})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> MoneyFlowIndex::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    std::unordered_map<std::string, spda_t> result{{"value", mfi(dataset.num_bars, {dataset.high, dataset.low, dataset.close, dataset.volume}, {config.params.at("period")})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", mfi(dataset.numBars, {dataset.high, dataset.low, dataset.close, dataset.volume}, {config.params.at("period")})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> MovingAverage::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     auto ma_method = (MAMethod) (int) config.params.at("ma_method");
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
     auto ma = apply_ma(num_bars, (int) config.params.at("period"), source, ma_method);
@@ -361,7 +361,7 @@ std::unordered_map<std::string, spda_t> MovingAverage::compute(const Dataset &da
 }
 
 std::unordered_map<std::string, spda_t> MovingAverageOscillator::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
     auto fast_period = config.params.at("fast_period");
     auto slow_period = config.params.at("slow_period");
@@ -377,7 +377,7 @@ bool MovingAverageOscillator::validate_config(IndicatorConfig &config) {
 }
 
 std::unordered_map<std::string, spda_t> MovingAverageCrossOver::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     auto ma_method = (MAMethod) (int) config.params.at("ma_method");
     std::unordered_map<std::string, spda_t> result{};
     result["fast"] = apply_ma(num_bars, (int) config.params.at("fast_period"), dataset.close, ma_method);
@@ -386,19 +386,19 @@ std::unordered_map<std::string, spda_t> MovingAverageCrossOver::compute(const Da
 }
 
 std::unordered_map<std::string, spda_t> OnBalanceVolume::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    std::unordered_map<std::string, spda_t> result{{"value", obv(dataset.num_bars, {dataset.close, dataset.volume})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", obv(dataset.numBars, {dataset.close, dataset.volume})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> RelativeStrengthIndex::compute(const Dataset &dataset, const IndicatorConfig &config) {
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
-    std::unordered_map<std::string, spda_t> result{{"value", rsi(dataset.num_bars, {source}, {config.params.at("period")})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", rsi(dataset.numBars, {source}, {config.params.at("period")})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> RelativeVigorIndex::compute(const Dataset &dataset, const IndicatorConfig &config) {
     // Ref: https://www.investopedia.com/terms/r/relative_vigor_index.asp
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
 
     auto a = sub(num_bars, {dataset.close, dataset.open})[0];
     auto b = shift(num_bars, 1, a);
@@ -429,7 +429,7 @@ std::unordered_map<std::string, spda_t> RelativeVigorIndex::compute(const Datase
 
 std::unordered_map<std::string, spda_t> RelativeVigorIndexSignal::compute(const Dataset &dataset, const IndicatorConfig &config) {
     // Ref: https://www.investopedia.com/terms/r/relative_vigor_index.asp
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
 
     auto a = sub(num_bars, {dataset.close, dataset.open})[0];
     auto b = shift(num_bars, 1, a);
@@ -468,7 +468,7 @@ std::unordered_map<std::string, spda_t> RelativeVigorIndexSignal::compute(const 
 
 std::unordered_map<std::string, spda_t> StandardDeviation::compute(const Dataset &dataset, const IndicatorConfig &config) {
     auto source = get_source(dataset, (ApplyTo) (int) config.params.at("apply_to"));
-    std::unordered_map<std::string, spda_t> result{{"value", stddev(dataset.num_bars, {source}, {config.params.at("period")})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", stddev(dataset.numBars, {source}, {config.params.at("period")})[0]}};
     return result;
 }
 
@@ -476,7 +476,7 @@ std::unordered_map<std::string, spda_t> Stochastic::compute(const Dataset &datas
     auto pct_k_period = config.params.at("pct_k_period");
     auto pct_k_slowing_period = config.params.at("pct_k_slowing_period");
     auto pct_d_period = config.params.at("pct_d_period");
-    auto stoch_ind = stoch(dataset.num_bars,
+    auto stoch_ind = stoch(dataset.numBars,
                            {dataset.high, dataset.low, dataset.close},
                            {pct_k_period, pct_k_slowing_period, pct_d_period});
 
@@ -488,7 +488,7 @@ std::unordered_map<std::string, spda_t> StochasticSignal::compute(const Dataset 
     auto pct_k_period = config.params.at("pct_k_period");
     auto pct_k_slowing_period = config.params.at("pct_k_slowing_period");
     auto pct_d_period = config.params.at("pct_d_period");
-    auto stoch_ind = stoch(dataset.num_bars,
+    auto stoch_ind = stoch(dataset.numBars,
                            {dataset.high, dataset.low, dataset.close},
                            {pct_k_period, pct_k_slowing_period, pct_d_period});
 
@@ -501,12 +501,12 @@ std::unordered_map<std::string, spda_t> Volumes::compute(const Dataset &dataset,
 }
 
 std::unordered_map<std::string, spda_t> WilliamsPercentRange::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    std::unordered_map<std::string, spda_t> result{{"value", willr(dataset.num_bars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
+    std::unordered_map<std::string, spda_t> result{{"value", willr(dataset.numBars, {dataset.high, dataset.low, dataset.close}, {config.params.at("period")})[0]}};
     return result;
 }
 
 std::unordered_map<std::string, spda_t> CandleColor::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     double min_change_pct = config.params.at("min_change_pct") / 100.0;
     spda_t offset{new double[num_bars]}, bearish{new double[num_bars]}, bullish{new double [num_bars]};
     for(int i=0; i<num_bars; i++){
@@ -542,7 +542,7 @@ std::unordered_map<std::string, spda_t> CandleColor::compute(const Dataset &data
 }
 
 std::unordered_map<std::string, spda_t> PinBar::compute(const Dataset &dataset, const IndicatorConfig &config) {
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     spda_t pb{new double[num_bars]};
     double body_len{}, wick_len{}, nose_len{}, body_pct{}, wick_pct{}, tot_len{};
     double max_body_pct = config.params.at("max_body_pct");
@@ -610,9 +610,9 @@ std::vector<std::shared_ptr<Indicator>> Indicators{
         std::make_unique<PinBar>()
 };
 
-void setup(const Dataset &dataset, int seed) {
+void Indicator::setup(const Dataset &dataset, int seed) {
     cryptonite::seed(seed);
-    int num_bars = dataset.num_bars;
+    int num_bars = dataset.numBars;
     int num_indicators = Indicators.size();
     for(int i=0; i<num_indicators; i++){
         std::shared_ptr<Indicator> indicator = Indicators[i];

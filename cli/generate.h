@@ -7,6 +7,9 @@
 
 #include "../include/CLI11.hpp"
 #include "../src/config.h"
+#include "../src/dataset.h"
+#include "../src/indicator.h"
+#include "../src/backtest.h"
 #include "command.h"
 
 
@@ -30,9 +33,8 @@ struct Generate: CryptoniteCommand {
 
             auto config = getConfig(name, version);
             showConfig(name, version);
-            auto strategyConfig = getStrategyConfig(config);
-            std::cout << std::setw(4) << strategyConfig.toJson() << std::endl;
 
+            generate(config);
         }
     }
 
@@ -104,6 +106,10 @@ private:
     StrategyGenConfig getStrategyConfig(json config){
         auto defaultConfig = StrategyGenConfig{}.toJson();
 
+        //acceptanceConfig
+        defaultConfig["acceptanceConfig"]["minNumTrades"] = atoi(config["min-num-trades"].get<std::string>().c_str());
+
+
         // brokerConfig
         defaultConfig["brokerConfig"]["commission"] = atof(config["commission"].get<std::string>().c_str());
         defaultConfig["brokerConfig"]["slippage"] = atof(config["slippage"].get<std::string>().c_str());
@@ -139,7 +145,27 @@ private:
 
 
         return StrategyGenConfig::fromJson(defaultConfig);
+    }
 
+
+    void generate(json config){
+        auto strategyGenConfig = getStrategyConfig(config);
+        Backtester backtester{strategyGenConfig, app->get_option("--datastore")->as<std::string>()};
+
+        double start_time = omp_get_wtime();
+        int numIterations = 1000;
+        progressbar bar(numIterations);
+        #pragma omp parallel for default(none) shared(backtester, strategyGenConfig, numIterations, bar)
+        for(int i=0; i<numIterations;i++){
+            Strategy strategy = Strategy::generate(strategyGenConfig);
+            backtester.evaluate(strategy);
+            #pragma omp critical
+            {
+                bar.update();
+            };
+        }
+        double time = omp_get_wtime() - start_time;
+        std::cout << "\n" << time << std::endl;
     }
 
 };
