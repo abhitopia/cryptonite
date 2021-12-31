@@ -11,57 +11,13 @@
 #include "binance.h"
 #include "json_file_handler.h"
 #include "../include/progressbar.hpp"
-
+#include "config.h"
 
 
 namespace fs = std::filesystem;
 
-struct DataSetInfo {
-    std::string baseAsset;
-    std::string quoteAsset;
-    Interval interval;
-
-    DataSetInfo(std::string baseAsset, std::string quoteAsset, Interval interval){
-        this->baseAsset = baseAsset;
-        this->quoteAsset = quoteAsset;
-        this->interval = interval;
-    }
-
-    std::string symbol(){
-        return baseAsset + quoteAsset;
-    }
-
-    int intervalInSeconds(){
-        return intervalToSeconds(interval);
-    }
-
-    std::string intervalInString(){
-        return intervalToString(interval);
-    }
-
-    bool check_valid(){
-        // check if symbol exists using Binance API and that trading is permitted.
-        auto api =  BinanceAPI{};
-        auto exchangeInfo = api.getExchangeInfo();
-        std::string symbol = this->symbol();
-        for(auto& symbolInfo: exchangeInfo["symbols"]){
-            if(symbolInfo["symbol"].get<std::string>() == symbol){
-                if(symbolInfo["baseAsset"].get<std::string>() == baseAsset and symbolInfo["quoteAsset"].get<std::string>() == quoteAsset){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    json exchangeInfo(){
-        auto api =  BinanceAPI{};
-        return api.getExchangeInfo(this->symbol());
-    }
-};
-
 struct DataSetV2 {
-    DataSetInfo info;
+    DataSetConfig info;
     std::shared_ptr<std::vector<long>> timestamp = std::make_shared<std::vector<long>>();
     std::shared_ptr<std::vector<double>> open = std::make_shared<std::vector<double>>();
     std::shared_ptr<std::vector<double>> high = std::make_shared<std::vector<double>>();
@@ -73,7 +29,7 @@ struct DataSetV2 {
     std::shared_ptr<std::vector<double>> weighted = std::make_shared<std::vector<double>>();
     std::shared_ptr<std::vector<double>> zero = std::make_shared<std::vector<double>>();
 
-    DataSetV2(DataSetInfo info): info{info}{};
+    DataSetV2(DataSetConfig info): info{info}{};
 
     void add(long timestamp, double open, double high, double low, double close, double volume){
         if(this->timestamp->size() > 0){
@@ -250,7 +206,7 @@ class DataStore {
 
 
 public:
-    DataStore(DataSetInfo info, std::string storePath): dataset(std::make_shared<DataSetV2>(info)){
+    DataStore(DataSetConfig info, std::string storePath): dataset(std::make_shared<DataSetV2>(info)){
         this->storePath = fs::path(storePath);
         load();
     }

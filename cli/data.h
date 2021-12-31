@@ -40,9 +40,9 @@ struct Data: CryptoniteCommand {
 
     void parse() override {
         if(command->count() > 0){
-            auto info = DataSetInfo(command->get_option("--base-asset")->as<std::string>(),
-                                    command->get_option("--quote-asset")->as<std::string>(),
-                                    stringToInterval(command->get_option("--interval")->as<std::string>()));
+            auto info = DataSetConfig(command->get_option("--base-asset")->as<std::string>(),
+                                      command->get_option("--quote-asset")->as<std::string>(),
+                                      stringToInterval(command->get_option("--interval")->as<std::string>()));
 
             if (!info.check_valid()){
                 std::cout << "Symbol: " << info.symbol() << " with Base asset: " << info.baseAsset << " and Quote Asset: "

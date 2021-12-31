@@ -7,6 +7,8 @@
 #include <string>
 #include "random.h"
 #include "../include/json.h"
+#include "binance.h"
+#include "constants.h"
 #include <tuple>
 
 
@@ -22,6 +24,8 @@ enum Policy {
 
 std::string policyToString(Policy policy);
 
+Policy stringToPolicy(std::string str);
+
 enum SLType {
     FIXED = 0,
     TRAILING = 1,
@@ -29,15 +33,15 @@ enum SLType {
 };
 
 std::string slTypeToString(SLType sl_type);
-
+SLType stringToSlType(std::string str);
 
 struct TradeSizeGenConfig {
     Policy bidirectionalTradePolicy{Policy::ALWAYS};
     Policy fixedTradeSizePolicy{Policy::NEVER};
 
-    TradeSizeGenConfig(Policy bidirectionalTradePolicy = Policy::ALWAYS, Policy absoluteTradeSizePolicy = Policy::NEVER){
+    TradeSizeGenConfig(Policy bidirectionalTradePolicy = Policy::ALWAYS, Policy fixedTradeSizePolicy = Policy::NEVER){
         this->bidirectionalTradePolicy = bidirectionalTradePolicy;
-        this->fixedTradeSizePolicy = absoluteTradeSizePolicy;
+        this->fixedTradeSizePolicy = fixedTradeSizePolicy;
     }
 
     bool is_bidirectional() const;;
@@ -45,6 +49,7 @@ struct TradeSizeGenConfig {
     std::tuple<bool, double> get_trade_size() const;
 
     json toJson();
+    static TradeSizeGenConfig fromJson(json j);
 };
 
 struct TakeProfitGenConfig {
@@ -52,10 +57,11 @@ struct TakeProfitGenConfig {
     double tpMin{0.01};
     double tpMax{0.1};
 
-    TakeProfitGenConfig(Policy policy=Policy::SOMETIMES, double tp_min=0.01, double tp_max=0.1);
+    TakeProfitGenConfig(Policy policy=Policy::SOMETIMES, double tpMin=0.01, double tpMax=0.1);
     double get_tp() const;
 
     json toJson();
+    static TakeProfitGenConfig fromJson(json j);
 };
 
 struct StopLossGenConfig {
@@ -69,6 +75,7 @@ struct StopLossGenConfig {
     bool is_sl_trailing() const;
     double get_sl() const;
     json toJson();
+    static StopLossGenConfig fromJson(json j);
 };
 
 struct RulesGenConfig {
@@ -76,6 +83,7 @@ struct RulesGenConfig {
     int numMaxExitRules{2};
     double explorationProb{0.5};
     json toJson();
+    static RulesGenConfig fromJson(json j);
 };
 
 
@@ -83,6 +91,7 @@ struct BrokerConfig {
     double commission{0.002};
     double slippage{0.005};
     json toJson();
+    static BrokerConfig fromJson(json j);
 };
 
 struct DepositConfig {
@@ -97,10 +106,34 @@ struct DepositConfig {
     }
 
     json toJson();
+    static DepositConfig fromJson(json j);
 
 };
 
+
+struct DataSetConfig {
+    std::string baseAsset;
+    std::string quoteAsset;
+    Interval interval;
+
+    DataSetConfig(std::string baseAsset = "BTC", std::string quoteAsset = "USDT", Interval interval = Interval::MINUTE1){
+        this->baseAsset = baseAsset;
+        this->quoteAsset = quoteAsset;
+        this->interval = interval;
+    }
+
+    std::string symbol();
+    int intervalInSeconds();
+    std::string intervalInString();
+    bool check_valid();
+    json exchangeInfo();
+    json toJson();
+    static DataSetConfig fromJson(json j);
+};
+
+
 struct StrategyGenConfig {
+    DataSetConfig dataSetConfig{};
     TradeSizeGenConfig tradeSizeGenConfig{};
     RulesGenConfig rulesGenConfig{};
     TakeProfitGenConfig takeProfitGenConfig{};
@@ -108,6 +141,8 @@ struct StrategyGenConfig {
     BrokerConfig brokerConfig{};
     DepositConfig depositConfig{};
     json toJson();
+
+    static StrategyGenConfig fromJson(json j);
 };
 
 

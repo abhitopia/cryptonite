@@ -8,6 +8,7 @@
 #include "../include/CLI11.hpp"
 #include "configure.h"
 #include "data.h"
+#include "generate.h"
 
 
 class CryptoniteApp {
@@ -54,15 +55,14 @@ public:
     int run(int argc, char **argv){
         addCommand(std::shared_ptr<CryptoniteCommand>{new Configure});
         addCommand(std::shared_ptr<CryptoniteCommand>{new Data});
+        addCommand(std::shared_ptr<CryptoniteCommand>{new Generate});
 
         setup();
 
         CLI11_PARSE(app, argc, argv);
 
         try {                                                                                                              \
-            parse();
-//            Database db("Hello.txt");
-                                                                                            \
+            parse();             \
         } catch (const std::system_error& e) {
             std::cout << e.what() << " (" << e.code() << ")" << std::endl;
         }

@@ -263,15 +263,15 @@ private:
 
         subcommand->add_option("--base-asset,-b", "Base Asset eg. BTC")
                   ->check(CLI::TypeValidator<std::string>())
-                  ->default_val("BTC");
+                  ->default_val(config.dataSetConfig.baseAsset);
 
         subcommand->add_option("--quote-asset,-q", "Quote Asset eg. GBP")
                 ->check(CLI::TypeValidator<std::string>())
-                ->default_val("USDT");
+                ->default_val(config.dataSetConfig.quoteAsset);
 
         subcommand->add_option("--interval,-i", "Dataset interval between bars")
                 ->transform(intervalValidator)
-                ->default_val(intervalToString(Interval::MINUTE1));
+                ->default_val(config.dataSetConfig.intervalInString());
 
         subcommand->add_option("--max-entry-rules,--mnr",
                                 "Maximum number of entry rules used in generated strategies")
@@ -498,9 +498,9 @@ private:
 
     bool validateConfig(json& config){
 //        std::cout << std::setw(2) << config << std::endl;
-        auto info = DataSetInfo(config["base-asset"].get<std::string>(),
-                                config["quote-asset"].get<std::string>(),
-                                stringToInterval(config["interval"].get<std::string>()));
+        auto info = DataSetConfig(config["base-asset"].get<std::string>(),
+                                  config["quote-asset"].get<std::string>(),
+                                  stringToInterval(config["interval"].get<std::string>()));
 
         if(!info.check_valid()){
             std::cout << "Symbol: " + info.symbol() + " not available!" << std::endl;

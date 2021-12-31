@@ -12,11 +12,27 @@ std::string policyToString(Policy policy) {
     }
 }
 
+Policy stringToPolicy(std::string str) {
+    switch(switchHash(str.c_str())){
+        case switchHash("always"): return Policy::ALWAYS;
+        case switchHash("never"): return Policy::NEVER;
+        case switchHash("sometimes"): return Policy::SOMETIMES;
+    }
+}
+
 std::string slTypeToString(SLType sl_type) {
     switch(sl_type){
         case FIXED: return "fixed";
         case TRAILING: return "trailing";
         case EITHER: return "either";
+    }
+}
+
+SLType stringToSlType(std::string str) {
+    switch(switchHash(str.c_str())){
+        case switchHash("fixed"): return SLType::FIXED;
+        case switchHash("trailing"): return SLType::TRAILING;
+        case switchHash("either"): return SLType::EITHER;
     }
 }
 
@@ -36,9 +52,16 @@ std::tuple<bool, double> TradeSizeGenConfig::get_trade_size() const {
 
 json TradeSizeGenConfig::toJson() {
     json j;
-    j["absolute_size_policy"] = policyToString(fixedTradeSizePolicy);
-    j["bidirectional_trade_policy"] = policyToString(bidirectionalTradePolicy);
+    j["bidirectionalTradePolicy"] = policyToString(bidirectionalTradePolicy);
+    j["fixedTradeSizePolicy"] = policyToString(fixedTradeSizePolicy);
     return j;
+}
+
+TradeSizeGenConfig TradeSizeGenConfig::fromJson(json j) {
+    return TradeSizeGenConfig(
+            stringToPolicy(j["bidirectionalTradePolicy"].get<std::string>()),
+            stringToPolicy(j["fixedTradeSizePolicy"].get<std::string>())
+    );
 }
 
 
@@ -49,9 +72,9 @@ double TakeProfitGenConfig::get_tp() const {
     return cryptonite::rand(tpMin, tpMax);
 }
 
-TakeProfitGenConfig::TakeProfitGenConfig(Policy policy, double tp_min, double tp_max) {
-    this->tpMin = tp_min;
-    this->tpMax = tp_max;
+TakeProfitGenConfig::TakeProfitGenConfig(Policy policy, double tpMin, double tpMax) {
+    this->tpMin = tpMin;
+    this->tpMax = tpMax;
     this->policy = policy;
 }
 
@@ -61,6 +84,14 @@ json TakeProfitGenConfig::toJson() {
     j["tpMax"] = tpMax;
     j["policy"] = policyToString(policy);
     return j;
+}
+
+TakeProfitGenConfig TakeProfitGenConfig::fromJson(json j) {
+    return TakeProfitGenConfig(
+                stringToPolicy(j["policy"].get<std::string>()),
+                j["tpMin"].get<double>(),
+                j["tpMax"].get<double>()
+            );
 }
 
 StopLossGenConfig::StopLossGenConfig(Policy policy, SLType type, double sl_min, double sl_max) {
@@ -90,6 +121,14 @@ json StopLossGenConfig::toJson() {
     return j;
 }
 
+StopLossGenConfig StopLossGenConfig::fromJson(json j) {
+    return StopLossGenConfig(
+                stringToPolicy(j["policy"].get<std::string>()),
+                stringToSlType(j["type"].get<std::string>()),
+                j["slMin"].get<double>(),
+                j["slMax"].get<double>());
+}
+
 
 json RulesGenConfig::toJson() {
     json j;
@@ -99,11 +138,26 @@ json RulesGenConfig::toJson() {
     return j;
 }
 
+RulesGenConfig RulesGenConfig::fromJson(json j) {
+    auto config = RulesGenConfig();
+    config.numMaxEntryRules = j["numMaxEntryRules"].get<int>();
+    config.numMaxExitRules = j["numMaxExitRules"].get<int>();
+    config.explorationProb = j["explorationProb"].get<double>();
+    return config;
+}
+
 json BrokerConfig::toJson() {
     json j;
     j["commission"] = commission;
     j["slippage"] = slippage;
     return j;
+}
+
+BrokerConfig BrokerConfig::fromJson(json j) {
+    auto config = BrokerConfig{};
+    config.commission = j["commission"].get<double>();
+    config.slippage = j["slippage"].get<double>();
+    return config;
 }
 
 json DepositConfig::toJson() {
@@ -113,8 +167,14 @@ json DepositConfig::toJson() {
     return j;
 }
 
+DepositConfig DepositConfig::fromJson(json j) {
+    return DepositConfig(j["quoteDeposit"].get<int>(),
+                        j["maxBaseBorrow"].get<int>());
+}
+
 json StrategyGenConfig::toJson() {
     json j;
+    j["dataSetConfig"] = dataSetConfig.toJson();
     j["tradeSizeGenConfig"] = tradeSizeGenConfig.toJson();
     j["rulesGenConfig"] = rulesGenConfig.toJson();
     j["takeProfitGenConfig"] = takeProfitGenConfig.toJson();
@@ -124,4 +184,61 @@ json StrategyGenConfig::toJson() {
     return j;
 }
 
+StrategyGenConfig StrategyGenConfig::fromJson(json j) {
+    auto config = StrategyGenConfig();
+    config.dataSetConfig = DataSetConfig::fromJson(j["dataSetConfig"]);
+    config.tradeSizeGenConfig = TradeSizeGenConfig::fromJson(j["tradeSizeGenConfig"]);
+    config.rulesGenConfig = RulesGenConfig::fromJson(j["rulesGenConfig"]);
+    config.takeProfitGenConfig = TakeProfitGenConfig::fromJson(j["takeProfitGenConfig"]);
+    config.stopLossGenConfig = StopLossGenConfig::fromJson(j["stopLossGenConfig"]);
+    config.brokerConfig = BrokerConfig::fromJson(j["brokerConfig"]);
+    config.depositConfig = DepositConfig::fromJson(j["depositConfig"]);
+    return config;
+}
 
+
+std::string DataSetConfig::symbol() {
+    return baseAsset + quoteAsset;
+}
+
+int DataSetConfig::intervalInSeconds() {
+    return intervalToSeconds(interval);
+}
+
+std::string DataSetConfig::intervalInString() {
+    return intervalToString(interval);
+}
+
+bool DataSetConfig::check_valid() {
+    // check if symbol exists using Binance API and that trading is permitted.
+    auto api =  BinanceAPI{};
+    auto exchangeInfo = api.getExchangeInfo();
+    std::string symbol = this->symbol();
+    for(auto& symbolInfo: exchangeInfo["symbols"]){
+        if(symbolInfo["symbol"].get<std::string>() == symbol){
+            if(symbolInfo["baseAsset"].get<std::string>() == baseAsset and symbolInfo["quoteAsset"].get<std::string>() == quoteAsset){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+json DataSetConfig::exchangeInfo() {
+    auto api =  BinanceAPI{};
+    return api.getExchangeInfo(this->symbol());
+}
+
+json DataSetConfig::toJson() {
+    json j;
+    j["baseAsset"] = baseAsset;
+    j["quoteAsset"] = quoteAsset;
+    j["interval"] = intervalInString();
+    return j;
+}
+
+DataSetConfig DataSetConfig::fromJson(json j) {
+    return DataSetConfig(j["baseAsset"].get<std::string>(),
+                        j["quoteAsset"].get<std::string>(),
+                         stringToInterval(j["interval"].get<std::string>()));
+}
