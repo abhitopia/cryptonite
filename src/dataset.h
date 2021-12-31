@@ -5,8 +5,6 @@
 #ifndef CRYPTONITE_DATASET_H
 #define CRYPTONITE_DATASET_H
 
-#include <string>
-#include <memory>
 #include "function.h"
 #include "config.h"
 

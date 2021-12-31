@@ -1,15 +1,7 @@
 //
 // Created by Abhishek Aggarwal on 25/10/2021.
 //
-#include <iostream>
 #include "dataset.h"
-#include "../include/csv.h"
-#include "../include/date.h"
-
-
-using namespace io;
-using namespace date;
-using namespace std::chrono;
 
 
 Dataset::Dataset(const DataSetContainer& container) {

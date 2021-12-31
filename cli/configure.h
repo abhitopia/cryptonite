@@ -12,7 +12,6 @@
 #include <map>
 #include "../include/date.h"
 #include "../include/fort/fort.hpp"
-
 #include "command.h"
 
 std::string getTimestamp(){

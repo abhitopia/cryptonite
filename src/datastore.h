@@ -72,6 +72,7 @@ class DataStore {
         if(numUpdates > 1000){
             JsonFileHandler::write(path().string(), dataJson);
         }
+        std::cout << std::endl;
     }
 
     void updateDataset(){
