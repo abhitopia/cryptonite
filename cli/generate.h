@@ -5,12 +5,14 @@
 #ifndef CLI_GENERATE_H
 #define CLI_GENERATE_H
 
+#include <queue>
 #include "../include/CLI11.hpp"
 #include "../src/config.h"
 #include "../src/dataset.h"
 #include "../src/indicator.h"
 #include "../src/backtest.h"
 #include "command.h"
+#include "../src/top_n_container.h"
 
 
 struct Generate: CryptoniteCommand {
@@ -153,19 +155,34 @@ private:
         Backtester backtester{strategyGenConfig, app->get_option("--datastore")->as<std::string>()};
 
         double start_time = omp_get_wtime();
-        int numIterations = 1000;
+        int numIterations = 100000;
         progressbar bar(numIterations);
-        #pragma omp parallel for default(none) shared(backtester, strategyGenConfig, numIterations, bar)
+        auto topN = TopNContainer<Backtest>{20};
+        volatile bool flag=false;
+
+        #pragma omp parallel for default(none) shared(flag, std::cout, topN, backtester, strategyGenConfig, numIterations, bar)
+
         for(int i=0; i<numIterations;i++){
             Strategy strategy = Strategy::generate(strategyGenConfig);
-            backtester.evaluate(strategy);
+//            std::cout << omp_get_thread_num() << " " << strategy.toJson() << std::endl;
+            Backtest backtest = backtester.evaluate(strategy);
             #pragma omp critical
             {
-                bar.update();
-            };
+//                    bar.update();
+                if(backtest.metrics.metric() > 0 and topN.insert(backtest)){
+                    showTopN(topN.getSorted());
+                }
+            }
         }
         double time = omp_get_wtime() - start_time;
         std::cout << "\n" << time << std::endl;
+    }
+
+    void showTopN(const std::vector<Backtest>& vect){
+        std::cout << "------------------------------------------------------------------" << std::endl;
+        for(auto& b: vect){
+            std::cout << b.metrics.toJson() << std::endl;
+        }
     }
 
 };

@@ -22,3 +22,7 @@
 - [x] Refactor out the cli/database
 - [x] Check fraction valid datapoints (volume != 0.0)
 - [ ] May be compute the CAGR for dataset for reference. If we are doing worse, then probably not worth considering.
+- [x] Add profit/loss per trade and also commission (as a percentage)
+- [x] Calculation of drawdown/ prafit factor should be based on this number
+- [x] Fix Avg Drawdown
+- [x] The backtest seems to be incorrect. Check why?

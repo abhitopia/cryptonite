@@ -11,6 +11,7 @@
 #include "binance.h"
 #include "json_file_handler.h"
 #include "../include/progressbar.hpp"
+#include "../include/progress.hpp"
 #include "config.h"
 #include "dataset.h"
 
@@ -43,22 +44,31 @@ class DataStore {
         long timeStampNow = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         int numBars = (timeStampNow - lastTimestamp()) / dataSetContainer.info.intervalInSeconds();
 
-
-        progressbar bar(numBars);
+        using namespace indicators;
+        show_console_cursor(false);
+        show_console_cursor(false);
+        indicators::ProgressBar bar{
+                option::BarWidth{100},
+                option::Start{"\rDownloading data ["},
+                option::Fill{"█"},
+                option::Lead{"█"},
+                option::Remainder{"-"},
+                option::End{"]"},
+                option::MaxProgress {numBars},
+                option::ForegroundColor{Color::white},
+                option::FontStyles{std::vector<FontStyle>{FontStyle::bold}},
+        };
         bool showBar = numBars > 2000;
-        if(showBar){
-            std::cout << "Downloading data for symbol: " << dataSetContainer.info.symbol() << std::endl;
-        }
-
         while (isStale()){
             long fromTimeStamp = lastTimestamp() - dataSetContainer.info.intervalInSeconds();
             json newData = api.getOHLCVdata(dataSetContainer.info.symbol(), dataSetContainer.info.interval, fromTimeStamp);
             for(auto& row: newData) {
                 int timestamp = row[0].get<long>()/1000;
                 if(timestamp > lastTimestamp()){
-                    if(showBar){
-                        bar.update();
-                    }
+                        if(showBar){
+                            bar.tick();
+                        }
+
                     dataJson.push_back(row);
                     numUpdates += 1;
                 }
@@ -69,9 +79,12 @@ class DataStore {
                 numUpdates = 0;
             }
         }
+
         if(numUpdates > 1000){
             JsonFileHandler::write(path().string(), dataJson);
         }
+        // Show cursor
+        indicators::show_console_cursor(true);
         std::cout << std::endl;
     }
 
@@ -83,11 +96,22 @@ class DataStore {
             dataSetContainer.reserve(dataJson.size());
         }
 
-        progressbar bar(dataJson.size());
-        std::cout << "Loading data for symbol: " << dataSetContainer.info.symbol() << std::endl;
-
+        const int maxProgress = dataJson.size();
+        using namespace indicators;
+        show_console_cursor(false);
+        indicators::ProgressBar bar{
+                option::BarWidth{100},
+                option::Start{"\rLoading data     ["},
+                option::Fill{"█"},
+                option::Lead{"█"},
+                option::Remainder{"-"},
+                option::End{"]"},
+                option::MaxProgress {maxProgress},
+                option::ForegroundColor{Color::white},
+                option::FontStyles{std::vector<FontStyle>{FontStyle::bold}},
+        };
         for(auto& row: dataJson){
-            bar.update();
+                bar.tick();
             timestamp = row[0].get<long>()/1000;
             if(dataSetContainer.timestamp->size() > 0){
                 long lastTimeStep = dataSetContainer.timestamp->back();
@@ -102,6 +126,9 @@ class DataStore {
             volume = atof(row[5].get<std::string>().c_str());
             dataSetContainer.add(timestamp, open, high, low, close, volume);
         }
+
+        // Show cursor
+        indicators::show_console_cursor(true);
         std::cout << std::endl;
     }
 
