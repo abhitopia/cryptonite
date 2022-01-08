@@ -101,9 +101,10 @@ void Indicator::set_level_range(double min_level, double max_level) {
 }
 
 spda_t shift(int num_bars, int offset, spda_t source, double fill_value) {
+
     spda_t result{new double[num_bars]};
     int split{};
-    if(offset > 0){
+    if(offset >= 0){
         split = offset;
         for(int i=0; i<split; i++){
             result[i] = fill_value;
@@ -112,9 +113,9 @@ spda_t shift(int num_bars, int offset, spda_t source, double fill_value) {
             result[i] = source[i-split];
         }
     } else{
-        split = num_bars - offset;
+        split = num_bars + offset; // notice offset < 0
         for(int i=0; i<split; i++){
-            result[i] = source[i+split];
+            result[i] = source[i-offset];  // notice offset < 0
         }
         for(int i=split; i<num_bars; i++){
             result[i] = fill_value;
