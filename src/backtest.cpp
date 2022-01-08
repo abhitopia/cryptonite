@@ -4,6 +4,24 @@
 
 #include "backtest.h"
 
+Equity Equity::getUpdatedEquity(double currentPrice, double quoteDelta, double baseDelta, double borrowAllowanceDelta) const {
+    Equity newEquity{};  // Not using {*this} will not call a copy constructor
+    newEquity.quoteEquity = quoteEquity + quoteDelta;
+    newEquity.baseEquity = baseEquity + baseDelta;
+    newEquity.borrowAllowance = borrowAllowance + borrowAllowanceDelta;
+    newEquity.totalInQuote = newEquity.quoteEquity + newEquity.baseEquity * currentPrice;
+    return newEquity;
+}
+
+json Equity::toJson() const {
+    json j;
+    j["quoteEquity"] = quoteEquity;
+    j["baseEquity"] = baseEquity;
+    j["borrowAllowance"] = borrowAllowance;
+    j["totalInQuote"] = totalInQuote;
+    return j;
+}
+
 Signal computeSignal(const Strategy &strategy, const Dataset &dataset) {
     Signal signal;
 //    signal.shouldLongEnter = strategy.entryCriteria.apply(dataset, false);
@@ -52,9 +70,12 @@ Equity Backtest::enterLong(int bar, double lastPrice, const Equity& equity, cons
     const PositionCloseConfig& closeConfig = strategy.positionCloseConfig;
     const BrokerConfig& brokerConfig = strategy.brokerConfig;
 
+    // In case, we were not able to return the borrowed base, availableQuoteEquity < 0.0
     double availableQuoteEquity = std::max(0.0, equity.quoteEquity);
     double tradeSize = openConfig.isAbsolute ? openConfig.quoteSize : (openConfig.quoteSize * availableQuoteEquity);
     double quoteLost = std::min(availableQuoteEquity, tradeSize);
+
+    assert(equity.baseEquity == 0.0 && "Base Equity must be zero before opening a new trade");
 
     if(quoteLost == 0){
         return equity;
@@ -67,10 +88,7 @@ Equity Backtest::enterLong(int bar, double lastPrice, const Equity& equity, cons
     // Commission is always applied on purchased asset
     baseGained = baseGained * (1.0 - brokerConfig.commission);
 
-    // If there is any baseEquity that was borrowed but not returned, return it now.
-    double allowanceReturned = equity.baseEquity >=0.0 ? 0.0 : -equity.baseEquity;
-
-    Equity newEquity = equity.getUpdatedEquity(currentPrice, -quoteLost, baseGained, allowanceReturned);
+    Equity newEquity = equity.getUpdatedEquity(currentPrice, -quoteLost, baseGained, 0.0);
 
     Order order{};
     order.bar = bar;
@@ -81,8 +99,9 @@ Equity Backtest::enterLong(int bar, double lastPrice, const Equity& equity, cons
 
     double takeProfit = lastPrice * (1.0 + closeConfig.takeProfit);
     double stopLoss = lastPrice * (1.0 - closeConfig.stopLoss);
-    openTrade(order, takeProfit, stopLoss, closeConfig.trailingSl);
+    openTrade(equity, order, takeProfit, stopLoss, closeConfig.trailingSl);
 
+//    std::cout << "Opening Long Trade: " << std::setw(4) << getActiveTrade().toJson() << std::endl;
     return newEquity;
 }
 
@@ -121,7 +140,9 @@ Equity Backtest::enterShort(int bar, double lastPrice, const Equity& equity, con
 
     double takeProfit = lastPrice * (1.0 - closeConfig.takeProfit);
     double stopLoss = lastPrice * (1.0 + closeConfig.stopLoss);
-    openTrade(order, takeProfit, stopLoss, closeConfig.trailingSl);
+    openTrade(equity, order, takeProfit, stopLoss, closeConfig.trailingSl);
+
+//    std::cout << "Opening Short Trade: " << std::setw(4) << getActiveTrade().toJson() << std::endl;
     return newEquity;
 }
 
@@ -148,7 +169,8 @@ Equity Backtest::exitLong(int bar, double lastPrice, const Equity& equity, const
     order.price = currentPrice;
     order.isLong = false;
 
-    closeTrade(order);
+    closeTrade(newEquity, order);
+//    std::cout << "Closing Long Trade: " << std::setw(4) << activeTrade.toJson() << std::endl;
     return newEquity;
 }
 
@@ -170,7 +192,13 @@ Equity Backtest::exitShort(int bar, double lastPrice, const Equity& equity, cons
     double quoteLost = baseToBuy * currentPrice;
     double baseGained = baseBorrowed; // The math works out.
 
+    // Notice that the borrowed money is ALWAYS returned, even if that means quoteLost > currentEquity.quoteEquity
+    // Also, a single loss making short trade would not mean available Quote Equity will go < 0.0
     Equity newEquity = equity.getUpdatedEquity(currentPrice, -quoteLost, baseGained, baseGained);
+
+
+    assert(newEquity.baseEquity == 0.0 && "Base Equity must be zero after closing a short trade");
+
 
     Order order{};
     order.bar = bar;
@@ -179,7 +207,8 @@ Equity Backtest::exitShort(int bar, double lastPrice, const Equity& equity, cons
     order.price = currentPrice;
     order.isLong = true;
 
-    closeTrade(order);
+    closeTrade(newEquity, order);
+//    std::cout << "Closing Short Trade: " << std::setw(4) << activeTrade.toJson() << std::endl;
     return newEquity;
 }
 
@@ -203,6 +232,8 @@ Backtest Backtester::evaluate(const Strategy &strategy) {
                                   depositConfig.quoteDeposit,
                                   borrowAllowance);
 
+    double minQuoteBalance = acceptanceConfig.minTotalEquityFraction * strategy.depositConfig.quoteDeposit;
+
 
     for(int bar=0; bar < dataset.numBars; bar++){
         double currentPrice = dataset.open[bar];
@@ -218,12 +249,13 @@ Backtest Backtester::evaluate(const Strategy &strategy) {
                 }
             }
 
+            // Always close the trade on the final bar
             if(activeTrade.is_long()){
-                if(signal.shouldLongExit[bar] or currentPrice <= activeTrade.stopLoss){
+                if(signal.shouldLongExit[bar] or currentPrice <= activeTrade.stopLoss or bar == dataset.numBars-1){
                     currentEquity = backtest.exitLong(bar, currentPrice, currentEquity, strategy);
                 }
             }else {
-                if(signal.shouldShortExit[bar] or currentPrice >= activeTrade.stopLoss){
+                if(signal.shouldShortExit[bar] or currentPrice >= activeTrade.stopLoss or bar == dataset.numBars-1){
                     currentEquity = backtest.exitShort(bar, currentPrice, currentEquity, strategy);
                 }
             }
@@ -239,14 +271,14 @@ Backtest Backtester::evaluate(const Strategy &strategy) {
 
         currentEquity = currentEquity.getUpdatedEquity(currentPrice);
         backtest.equityCurve.emplace_back(currentEquity);
-        if(currentEquity.totalInQuote < acceptanceConfig.minTotalEquityFraction * strategy.depositConfig.quoteDeposit ){
+        if(currentEquity.totalInQuote < minQuoteBalance ){
             break;
         }
     }
 
     int numTrades = (int)backtest.trades.size();
-    if(numTrades >= acceptanceConfig.minNumTrades){
-        backtest.metrics.compute(strategy, dataset, backtest.equityCurve, numTrades);
+    if(numTrades >= acceptanceConfig.minNumTrades && currentEquity.totalInQuote >= minQuoteBalance){
+        backtest.computeMetrics(dataset);
     }
 
     return backtest;
