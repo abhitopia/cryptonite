@@ -90,7 +90,7 @@ struct RulesGenConfig {
 struct BrokerConfig {
     double commission{0.002};
     double slippage{0.005};
-    json toJson();
+    json toJson() const;
     static BrokerConfig fromJson(json j);
 };
 
@@ -105,7 +105,7 @@ struct DepositConfig {
         this->maxBaseBorrow = max_base_borrow;
     }
 
-    json toJson();
+    json toJson() const;
     static DepositConfig fromJson(json j);
 
 };
@@ -124,10 +124,10 @@ struct DataSetConfig {
 
     std::string symbol();
     int intervalInSeconds();
-    std::string intervalInString();
+    std::string intervalInString() const;
     bool check_valid();
     json exchangeInfo();
-    json toJson();
+    json toJson() const;
     static DataSetConfig fromJson(json j);
 };
 

@@ -26,3 +26,5 @@
 - [x] Calculation of drawdown/ prafit factor should be based on this number
 - [x] Fix Avg Drawdown
 - [x] The backtest seems to be incorrect. Check why?
+- [x] Format table and output in generate command
+- [ ] Refreshing table

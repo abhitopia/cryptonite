@@ -30,7 +30,7 @@ struct Criteria {
     std::shared_ptr<bool[]> apply(const Dataset &dataset, bool contra=false) const;
 
     static std::vector<IndicatorConfig> generate_configs(int num_indicators, double exploration_prob=0.5);
-    json toJson();
+    json toJson() const;
 };
 
 struct EntryCriteria : Criteria {
@@ -59,7 +59,7 @@ struct PositionOpenConfig {
 
     PositionOpenConfig(double quote_size = 1.0, bool is_absolute = false, bool bidirectional = true);
 
-    json toJson();
+    json toJson() const;
 
 };
 
@@ -70,7 +70,7 @@ struct PositionCloseConfig {
     double stopLoss{INFINITY};
     PositionCloseConfig(double tp = INFINITY, double sl = INFINITY, bool trailing_sl = true);
 
-    json toJson();
+    json toJson() const;
 
 };
 
@@ -92,7 +92,7 @@ struct Strategy {
 
     static Strategy generate(const StrategyGenConfig& config);
 
-    json toJson();
+    json toJson() const;
 };
 
 

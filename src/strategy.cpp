@@ -48,7 +48,7 @@ EntryCriteria EntryCriteria::generate(int num_indicators, double exploration_pro
     return EntryCriteria(Criteria::generate_configs(num_indicators, exploration_prob));
 }
 
-json Criteria::toJson() {
+json Criteria::toJson() const {
     json j;
     for (auto &config: configs){
         j.push_back(config.toJson());
@@ -73,7 +73,7 @@ ExitCriteria ExitCriteria::generate(int num_indicators, double exploration_prob)
     return ExitCriteria(Criteria::generate_configs(num_indicators, exploration_prob));
 }
 
-json PositionOpenConfig::toJson() {
+json PositionOpenConfig::toJson() const {
     json j;
     j["isAbsolute"] = isAbsolute;
     j["quoteSize"] = quoteSize;
@@ -93,7 +93,7 @@ PositionOpenConfig::PositionOpenConfig(double quote_size, bool is_absolute, bool
 
 }
 
-json PositionCloseConfig::toJson() {
+json PositionCloseConfig::toJson() const {
     json j;
     j["takeProfit"] = takeProfit;
     j["stopLoss"] = stopLoss;
@@ -114,7 +114,7 @@ PositionCloseConfig::PositionCloseConfig(double tp, double sl, bool trailing_sl)
 }
 
 
-json Strategy::toJson() {
+json Strategy::toJson() const {
     json j;
     j["positionOpenConfig"] = positionOpenConfig.toJson();
     j["positionCloseConfig"] = positionCloseConfig.toJson();

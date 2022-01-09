@@ -5,7 +5,8 @@
 #ifndef CLI_GENERATE_H
 #define CLI_GENERATE_H
 
-#include <queue>
+#include <unordered_map>
+#include <limits>
 #include "../include/CLI11.hpp"
 #include "../src/config.h"
 #include "../src/dataset.h"
@@ -15,14 +16,48 @@
 #include "../src/top_n_container.h"
 
 
+struct GeneratedStrategy {
+    std::string name{};
+    json content{};
+    std::string createdAt{};
+    GeneratedStrategy(){};
+
+    static GeneratedStrategy fromBacktest(std::string name, const Backtest& backtest){
+        auto backtestJson = backtest.toJson();
+        auto generatedStrategy = GeneratedStrategy{};
+        generatedStrategy.name = name;
+        generatedStrategy.content["metrics"] = backtestJson["metrics"];
+        generatedStrategy.content["strategy"] = backtestJson["strategy"];
+        generatedStrategy.content["dataset"] = backtestJson["dataset"];
+        generatedStrategy.createdAt = date::format("%F %T", std::chrono::system_clock::now());
+        return generatedStrategy;
+    }
+
+    json toJson() const {
+        json j;
+        j["content"] = content;
+        j["createdAt"] = createdAt;
+        return j;
+    }
+
+    double metric() const {
+        return content["metrics"]["CAGROverAvgDrawDown"].get<double>() * content["metrics"]["numTrades"].get<double>();
+    }
+
+    bool operator>(const GeneratedStrategy& other) const {
+        return this->metric() > other.metric();
+    }
+};
+
+
 struct Generate: CryptoniteCommand {
     json jsonDB{};
 
     void parse() override {
         if(command->count() > 0){
             jsonDB = JsonFileHandler::read(app->get_option("--database")->as<std::string>(), true);
-            if(!jsonDB.contains("configs"))
-                jsonDB["configs"] = json::object({});
+            if(!jsonDB.contains("generated"))
+                jsonDB["generated"] = json::object({});
 
             std::string name = command->get_option("--config")->as<std::string>();
             int version =  command->get_option("--version")->count() > 0 ? command->get_option("--version")->as<int>() : -1;
@@ -145,7 +180,6 @@ private:
         defaultConfig["tradeSizeGenConfig"]["bidirectionalTradePolicy"] = config["bidirectional-policy"].get<std::string>();
         defaultConfig["tradeSizeGenConfig"]["fixedTradeSizePolicy"] = config["fixed-size-policy"].get<std::string>();
 
-
         return StrategyGenConfig::fromJson(defaultConfig);
     }
 
@@ -155,35 +189,54 @@ private:
         Backtester backtester{strategyGenConfig, app->get_option("--datastore")->as<std::string>()};
 
         double start_time = omp_get_wtime();
-        int numIterations = 100000;
-        progressbar bar(numIterations);
-        auto topN = TopNContainer<Backtest>{20};
-        volatile bool flag=false;
-
-        #pragma omp parallel for default(none) shared(flag, std::cout, topN, backtester, strategyGenConfig, numIterations, bar)
-
-        for(int i=0; i<numIterations;i++){
+        auto topN = TopNContainer<GeneratedStrategy>{20};
+        unsigned long numEvaluated = 0;
+        #pragma omp parallel for default(none) shared(numEvaluated, start_time, topN, backtester, strategyGenConfig)
+        for(unsigned long i=0; i<ULONG_MAX; i++){
             Strategy strategy = Strategy::generate(strategyGenConfig);
-//            std::cout << omp_get_thread_num() << " " << strategy.toJson() << std::endl;
             Backtest backtest = backtester.evaluate(strategy);
-            #pragma omp critical
-            {
-//                    bar.update();
-                if(backtest.metrics.metric() > 0 and topN.insert(backtest)){
-                    showTopN(topN.getSorted());
-                }
+            if(backtest.metrics.metric() > 0){
+                topN.insert(saveGeneratedStrategy(backtest));
+            }
+            numEvaluated += 1;
+            if (omp_get_thread_num() == 0 and omp_get_wtime() - start_time > 1.0){
+                start_time = omp_get_wtime();
+                showTopN(numEvaluated, topN.getSorted());
             }
         }
-        double time = omp_get_wtime() - start_time;
+//        double time = omp_get_wtime() - start_time;
         std::cout << "\n" << time << std::endl;
     }
 
-    void showTopN(const std::vector<Backtest>& vect){
-        std::cout << "------------------------------------------------------------------" << std::endl;
-        for(auto& b: vect){
-            std::cout << b.metrics.toJson() << std::endl;
+    GeneratedStrategy saveGeneratedStrategy(const Backtest& backtest){
+        std::string name = get_random_name();
+        while (jsonDB["generate"].contains(name)){
+            name = get_random_name();
         }
+
+        GeneratedStrategy strategy = GeneratedStrategy::fromBacktest(name, backtest);
+        jsonDB["generated"][name] = strategy.toJson();
+        JsonFileHandler::write(app->get_option("--database")->as<std::string>(), jsonDB);
+        return strategy;
     }
 
+    void showTopN(int numEvaluated, const std::vector<GeneratedStrategy>& vect){
+        fort::char_table table;
+        table.set_cell_text_align(fort::text_align::center);
+        table.set_border_style(FT_BOLD_STYLE);
+        table.row(0).set_cell_bg_color(fort::color::black);
+        table[0][0].set_cell_span(9);
+        table <<  fort::header  << "Evaluated: " + std::to_string(numEvaluated) << fort::endr;
+        table << fort::header << "Name" << "Created At" << "CAGR/AvgDD (%)" << "# Trades" << "Max DD (%)" << "Profit Factor" << "Win %" << "Return %" << "CAGR (%)" << fort::endr << fort::separator;
+        for(auto& b: vect){
+            json metrics = b.toJson()["content"]["metrics"];
+            table << b.name << b.createdAt << metrics["CAGROverAvgDrawDown"].get<double>()
+                  << metrics["numTrades"].get<int>() << metrics["maxDrawDown"].get<double>()*100
+                  << metrics["profitFactor"].get<double>() << metrics["winRate"].get<double>()*100
+                  << metrics["totalReturn"].get<double>() *100 << metrics["CAGR"].get<double>() *100
+                  << fort::endr << fort::separator;
+        }
+        std::cout << table.to_string() << std::endl;
+    }
 };
 #endif //CLI_STRATEGY_H

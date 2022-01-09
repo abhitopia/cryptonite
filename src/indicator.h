@@ -39,7 +39,7 @@ struct IndicatorConfig{
         this->indicator = indicator;
         this->params = params;
     }
-    json toJson();
+    json toJson() const;
     std::shared_ptr<bool[]> compute(const Dataset &dataset, bool contra_trigger = false);
 };
 

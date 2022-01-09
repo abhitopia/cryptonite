@@ -10,7 +10,6 @@
 #include <iostream>
 #include "binance.h"
 #include "json_file_handler.h"
-#include "../include/progressbar.hpp"
 #include "../include/progress.hpp"
 #include "config.h"
 #include "dataset.h"

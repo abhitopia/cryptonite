@@ -146,7 +146,7 @@ RulesGenConfig RulesGenConfig::fromJson(json j) {
     return config;
 }
 
-json BrokerConfig::toJson() {
+json BrokerConfig::toJson() const {
     json j;
     j["commission"] = commission;
     j["slippage"] = slippage;
@@ -160,7 +160,7 @@ BrokerConfig BrokerConfig::fromJson(json j) {
     return config;
 }
 
-json DepositConfig::toJson() {
+json DepositConfig::toJson() const {
     json j;
     j["quoteDeposit"] = quoteDeposit;
     j["maxBaseBorrow"] = maxBaseBorrow;
@@ -207,7 +207,7 @@ int DataSetConfig::intervalInSeconds() {
     return intervalToSeconds(interval);
 }
 
-std::string DataSetConfig::intervalInString() {
+std::string DataSetConfig::intervalInString() const {
     return intervalToString(interval);
 }
 
@@ -231,7 +231,7 @@ json DataSetConfig::exchangeInfo() {
     return api.getExchangeInfo(this->symbol());
 }
 
-json DataSetConfig::toJson() {
+json DataSetConfig::toJson() const {
     json j;
     j["baseAsset"] = baseAsset;
     j["quoteAsset"] = quoteAsset;

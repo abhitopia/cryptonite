@@ -160,6 +160,11 @@ struct Backtest {
     std::vector<Equity> equityCurve{};
     std::vector<Trade> trades{};
     Metrics metrics{};
+    Strategy strategy;
+    DataSetConfig dataSetConfig;
+
+    Backtest(const Strategy& strategy, const DataSetConfig& dataSetConfig): strategy(strategy), dataSetConfig(dataSetConfig){};
+
 
     bool hasActiveTrade(){
         return not trades.empty() && trades.back().active;
@@ -239,6 +244,14 @@ struct Backtest {
         metrics.CAGR = std::pow((equityCurve.back().totalInQuote/equityCurve.front().totalInQuote), (365.0/numDays))  - 1.0;
         metrics.CAGROverAvgDrawDown = metrics.CAGR / metrics.avgDrawDown;
         metrics.CAGROverMaxDrawDown = metrics.CAGR /  metrics.maxDrawDown;
+    }
+
+    json toJson() const {
+        json j;
+        j["metrics"] = metrics.toJson();
+        j["dataset"] = dataSetConfig.toJson();
+        j["strategy"] = strategy.toJson();
+        return j;
     }
 
 };

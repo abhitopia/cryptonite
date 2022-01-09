@@ -156,7 +156,7 @@ spda_t rolling_sum(int num_bars, spda_t source, int period) {
     return result;
 }
 
-json IndicatorConfig::toJson() {
+json IndicatorConfig::toJson() const {
     json j;
     j["Indicator"] = indicator->toJson();
     j["trigger"] = trigger->toJson();
