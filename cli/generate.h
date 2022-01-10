@@ -189,7 +189,7 @@ private:
         Backtester backtester{strategyGenConfig, app->get_option("--datastore")->as<std::string>()};
 
         double start_time = omp_get_wtime();
-        auto topN = TopNContainer<GeneratedStrategy>{20};
+        auto topN = TopNContainer<GeneratedStrategy>{10};
         unsigned long numEvaluated = 0;
         #pragma omp parallel for default(none) shared(numEvaluated, start_time, topN, backtester, strategyGenConfig)
         for(unsigned long i=0; i<ULONG_MAX; i++){
@@ -199,7 +199,7 @@ private:
                 topN.insert(saveGeneratedStrategy(backtest));
             }
             numEvaluated += 1;
-            if (omp_get_thread_num() == 0 and omp_get_wtime() - start_time > 1.0){
+            if (omp_get_thread_num() == 0 and omp_get_wtime() - start_time > 0.5){
                 start_time = omp_get_wtime();
                 showTopN(numEvaluated, topN.getSorted());
             }
@@ -221,22 +221,28 @@ private:
     }
 
     void showTopN(int numEvaluated, const std::vector<GeneratedStrategy>& vect){
+
         fort::char_table table;
         table.set_cell_text_align(fort::text_align::center);
         table.set_border_style(FT_BOLD_STYLE);
         table.row(0).set_cell_bg_color(fort::color::black);
         table[0][0].set_cell_span(9);
         table <<  fort::header  << "Evaluated: " + std::to_string(numEvaluated) << fort::endr;
-        table << fort::header << "Name" << "Created At" << "CAGR/AvgDD (%)" << "# Trades" << "Max DD (%)" << "Profit Factor" << "Win %" << "Return %" << "CAGR (%)" << fort::endr << fort::separator;
+        table << fort::header << "Name"  << "CAGR/AvgDD" << "# Trades" << "Max DD (%)" << "Profit Factor" << "Win %" << "Return %" << "CAGR (%)" << "Created At" << fort::endr << fort::separator;
         for(auto& b: vect){
             json metrics = b.toJson()["content"]["metrics"];
-            table << b.name << b.createdAt << metrics["CAGROverAvgDrawDown"].get<double>()
+            table << b.name <<  metrics["CAGROverAvgDrawDown"].get<double>()
                   << metrics["numTrades"].get<int>() << metrics["maxDrawDown"].get<double>()*100
                   << metrics["profitFactor"].get<double>() << metrics["winRate"].get<double>()*100
                   << metrics["totalReturn"].get<double>() *100 << metrics["CAGR"].get<double>() *100
-                  << fort::endr << fort::separator;
+                  << b.createdAt << fort::endr << fort::separator;
         }
-        std::cout << table.to_string() << std::endl;
+
+        auto table_str = table.to_string();
+        int numNewLines = std::count(table_str.begin(), table_str.end(), '\n');
+        std::cout << table_str << "\033[100D" << "\033[" + std::to_string(numNewLines) + "A";
+
+
     }
 };
 #endif //CLI_STRATEGY_H
