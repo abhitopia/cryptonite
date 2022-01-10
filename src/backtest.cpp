@@ -261,7 +261,7 @@ Backtest Backtester::evaluate(const Strategy &strategy) {
             }
         }
 
-        if(not backtest.hasActiveTrade()){
+        if(not backtest.hasActiveTrade() and bar < dataset.numBars-1){ // Don't open trade on last bar
             if(signal.shouldLongEnter[bar]){
                 currentEquity = backtest.enterLong(bar, currentPrice, currentEquity, strategy);
             } else if(signal.shouldShortEnter[bar] and positionOpenConfig.bidirectional){
