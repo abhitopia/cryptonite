@@ -595,9 +595,10 @@ std::vector<std::string> SURNAMES{
 std::string get_random_name() {
     auto adjective = ADJECTIVES[cryptonite::randint(ADJECTIVES.size())];
     auto surname = SURNAMES[cryptonite::randint(SURNAMES.size())];
+    auto appendix = static_cast<int> (cryptonite::randint(0, 999));
     adjective[0] = toupper(adjective[0]);
     surname[0] = toupper(surname[0]);
-    return adjective + surname;
+    return adjective + surname + std::to_string(appendix);
 }
 
 

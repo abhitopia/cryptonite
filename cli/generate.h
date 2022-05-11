@@ -210,7 +210,7 @@ private:
 
     GeneratedStrategy saveGeneratedStrategy(const Backtest& backtest){
         std::string name = get_random_name();
-        while (jsonDB["generate"].contains(name)){
+        while (jsonDB["generated"].contains(name)){
             name = get_random_name();
         }
 
