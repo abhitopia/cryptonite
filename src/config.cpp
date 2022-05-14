@@ -50,7 +50,7 @@ std::tuple<bool, double> TradeSizeGenConfig::get_trade_size() const {
     return {true, cryptonite::rand(0.1, 0.8)};
 }
 
-json TradeSizeGenConfig::toJson() {
+json TradeSizeGenConfig::toJson() const {
     json j;
     j["bidirectionalTradePolicy"] = policyToString(bidirectionalTradePolicy);
     j["fixedTradeSizePolicy"] = policyToString(fixedTradeSizePolicy);
@@ -78,7 +78,7 @@ TakeProfitGenConfig::TakeProfitGenConfig(Policy policy, double tpMin, double tpM
     this->policy = policy;
 }
 
-json TakeProfitGenConfig::toJson() {
+json TakeProfitGenConfig::toJson() const {
     json j;
     j["tpMin"] = tpMin;
     j["tpMax"] = tpMax;
@@ -112,7 +112,7 @@ double StopLossGenConfig::get_sl() const {
     return cryptonite::rand(slMin, slMax);
 }
 
-json StopLossGenConfig::toJson() {
+json StopLossGenConfig::toJson() const {
     json j;
     j["slMin"] = slMin;
     j["slMax"] = slMax;
@@ -130,7 +130,7 @@ StopLossGenConfig StopLossGenConfig::fromJson(json j) {
 }
 
 
-json RulesGenConfig::toJson() {
+json RulesGenConfig::toJson() const {
     json j;
     j["numMaxEntryRules"] = numMaxEntryRules;
     j["numMaxExitRules"]= numMaxExitRules;
@@ -172,7 +172,7 @@ DepositConfig DepositConfig::fromJson(json j) {
                         j["maxBaseBorrow"].get<int>());
 }
 
-json StrategyGenConfig::toJson() {
+json StrategyGenConfig::toJson() const {
     json j;
     j["acceptanceConfig"] = acceptanceConfig.toJson();
     j["dataSetConfig"] = dataSetConfig.toJson();
@@ -245,7 +245,7 @@ DataSetConfig DataSetConfig::fromJson(json j) {
                          stringToInterval(j["interval"].get<std::string>()));
 }
 
-json AcceptanceConfig::toJson() {
+json AcceptanceConfig::toJson() const {
     json j;
     j["minNumTrades"] = minNumTrades;
     j["minTotalEquityFraction"] = minTotalEquityFraction;

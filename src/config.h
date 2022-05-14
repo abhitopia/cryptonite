@@ -48,7 +48,7 @@ struct TradeSizeGenConfig {
 
     std::tuple<bool, double> get_trade_size() const;
 
-    json toJson();
+    json toJson() const;
     static TradeSizeGenConfig fromJson(json j);
 };
 
@@ -60,7 +60,7 @@ struct TakeProfitGenConfig {
     TakeProfitGenConfig(Policy policy=Policy::SOMETIMES, double tpMin=0.01, double tpMax=0.1);
     double get_tp() const;
 
-    json toJson();
+    json toJson() const;
     static TakeProfitGenConfig fromJson(json j);
 };
 
@@ -74,7 +74,7 @@ struct StopLossGenConfig {
 
     bool is_sl_trailing() const;
     double get_sl() const;
-    json toJson();
+    json toJson() const;
     static StopLossGenConfig fromJson(json j);
 };
 
@@ -82,7 +82,7 @@ struct RulesGenConfig {
     int numMaxEntryRules{4};
     int numMaxExitRules{2};
     double explorationProb{0.5};
-    json toJson();
+    json toJson() const;
     static RulesGenConfig fromJson(json j);
 };
 
@@ -142,7 +142,7 @@ struct AcceptanceConfig {
         this->minTotalEquityFraction = minTotalEquityFraction;
     }
 
-    json toJson();
+    json toJson() const;
     static AcceptanceConfig fromJson(json j);
 };
 
@@ -155,7 +155,7 @@ struct StrategyGenConfig {
     StopLossGenConfig stopLossGenConfig{};
     BrokerConfig brokerConfig{};
     DepositConfig depositConfig{};
-    json toJson();
+    json toJson() const;
 
     static StrategyGenConfig fromJson(json j);
 };

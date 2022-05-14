@@ -18,34 +18,47 @@
 
 struct GeneratedStrategy {
     std::string name{};
-    json content{};
+    json metrics{};
+    json strategy{};
+    json dataset{};
     std::string createdAt{};
     GeneratedStrategy(){};
 
-    static GeneratedStrategy fromBacktest(std::string name, const Backtest& backtest){
+    static GeneratedStrategy fromBacktest(std::string name, const Backtest &backtest) {
         auto backtestJson = backtest.toJson();
-        auto generatedStrategy = GeneratedStrategy{};
-        generatedStrategy.name = name;
-        generatedStrategy.content["metrics"] = backtestJson["metrics"];
-        generatedStrategy.content["strategy"] = backtestJson["strategy"];
-        generatedStrategy.content["dataset"] = backtestJson["dataset"];
-        generatedStrategy.createdAt = date::format("%F %T", std::chrono::system_clock::now());
-        return generatedStrategy;
+        backtestJson["createdAt"] = date::format("%F %T", std::chrono::system_clock::now());
+        return fromJson(name, backtestJson);
     }
 
     json toJson() const {
         json j;
-        j["content"] = content;
+        j["metrics"] = metrics;
+        j["strategy"] = strategy;
+        j["dataset"] = dataset;
         j["createdAt"] = createdAt;
         return j;
     }
 
+    static GeneratedStrategy fromJson(std::string name, json j){
+        auto generatedStrategy = GeneratedStrategy{};
+        generatedStrategy.name = name;
+        generatedStrategy.metrics = j["metrics"];
+        generatedStrategy.strategy = j["strategy"];
+        generatedStrategy.dataset = j["dataset"];
+        generatedStrategy.createdAt = j["createdAt"].get<std::string>();
+        return generatedStrategy;
+    }
+
     double metric() const {
-        return content["metrics"]["CAGROverAvgDrawDown"].get<double>() * content["metrics"]["numTrades"].get<double>();
+        return metrics["CAGROverAvgDrawDown"].get<double>() * metrics["numTrades"].get<double>();
     }
 
     bool operator>(const GeneratedStrategy& other) const {
         return this->metric() > other.metric();
+    }
+
+    bool operator<(const GeneratedStrategy& other) const {
+        return this->metric() < other.metric();
     }
 };
 
@@ -61,6 +74,36 @@ struct Generate: CryptoniteCommand {
 
             std::string name = command->get_option("--config")->as<std::string>();
             int version =  command->get_option("--version")->count() > 0 ? command->get_option("--version")->as<int>() : -1;
+            if(command->got_subcommand("list") || command->got_subcommand("delete")){
+                CLI::App* subcommand;
+                if(command->got_subcommand("list")){
+                    subcommand = command->get_subcommand("list");
+                } else {
+                    subcommand = command->get_subcommand("delete");
+                }
+
+                json filter;
+                filter["name"] = subcommand->get_option("--name")->as<std::string>();
+                filter["quoteAsset"] = subcommand->get_option("--quoteAsset")->as<std::string>();
+                filter["baseAsset"] = subcommand->get_option("--baseAsset")->as<std::string>();
+                filter["interval"] = subcommand->get_option("--interval")->as<std::string>();
+
+                auto generatedStrategies = loadGeneratedStrategies(filter);
+                if(command->got_subcommand("list")){
+                    showTopN(generatedStrategies);
+                } else {
+                    showTopN(generatedStrategies, "Are you sure you want to delete these?");
+                    std::cout << "Press `d` to delete listed strategies: ";
+                    char answer = std::cin.get();
+                    if(answer == 'd') {
+                        std::cout << "Here!!" << answer;
+                    }
+                    return;
+                }
+
+                return;
+            }
+
 
             if(!hasConfig(name, version)){
                 std::string versionUsed = version < 0 ? "default" : std::to_string(version);
@@ -70,10 +113,10 @@ struct Generate: CryptoniteCommand {
 
             auto config = getConfig(name, version);
             showConfig(name, version);
-
             generate(config);
         }
     }
+
 
 
     void setup(CLI::App& cli_app) override {
@@ -81,16 +124,69 @@ struct Generate: CryptoniteCommand {
         command = app->add_subcommand("generate", "Generate a strategy");
 
         command->add_option("--config,-c,config", "Name of the configuration.")
-                    ->check(CLI::TypeValidator<std::string>())
-                    ->required();
+                    ->check(CLI::TypeValidator<std::string>());
+//                     ->required();
 
         command->add_option("--version,-v,version", "Version of the configuration. Default version used if not specified")
                     ->check(CLI::PositiveNumber);
+
+        auto listCommand = command->add_subcommand("list", "List generated strategies.");
+        auto deleteCommand = command->add_subcommand("delete", "Delete generated strategies.");
+
+        addSubcommandOptions(listCommand);
+        addSubcommandOptions(deleteCommand);
+        command->fallthrough(true);
     }
 
 
 
 private:
+
+    void addSubcommandOptions(CLI::App* subcommand){
+        subcommand->add_option("--name,-n", "Filter by generated strategy name");
+        subcommand->add_option("--baseAsset,-b,baseAsset", "Filter by base asset")->excludes("--name");
+        subcommand->add_option("--quoteAsset,-q,quoteAsset", "Filter by quote asset")->excludes("--name");
+        subcommand->add_option("--interval,-i,interval", "Filter by interval")->excludes("--name");
+    }
+
+    std::vector<GeneratedStrategy> loadGeneratedStrategies(json filter){
+
+        std::vector<GeneratedStrategy> generatedStrategies{};
+        auto topN = TopNContainer<GeneratedStrategy>{1000};
+
+        if(not jsonDB.contains("generated") ){
+            return generatedStrategies;
+        };
+
+        auto strategyName = filter["name"].get<std::string>();
+        auto quoteAsset = filter["quoteAsset"].get<std::string>();
+        auto baseAsset = filter["baseAsset"].get<std::string>();
+        auto interval = filter["interval"].get<std::string>();
+
+        for(auto& [name, strategy]: jsonDB["generated"].items()){
+
+            if(strategyName.length() > 0 and strategyName != name){
+                continue;
+            }
+
+            if(quoteAsset.length() > 0 and quoteAsset != strategy["dataset"]["quoteAsset"].get<std::string>()){
+                continue;
+            }
+            if(baseAsset.length() > 0 and baseAsset != strategy["dataset"]["baseAsset"].get<std::string>()){
+                continue;
+            }
+            if(interval.length() > 0 and interval != strategy["dataset"]["interval"].get<std::string>()){
+                continue;
+            }
+
+            generatedStrategies.push_back(GeneratedStrategy::fromJson(name, strategy));
+        }
+
+        std::sort(generatedStrategies.begin(), generatedStrategies.end(), std::greater<GeneratedStrategy>());
+        return generatedStrategies;
+    }
+
+
     bool hasConfig(std::string name, int version=-1){
         if(not jsonDB.contains("configs") || not jsonDB["configs"].contains(name)){
             return false;
@@ -201,14 +297,14 @@ private:
             numEvaluated += 1;
             if (omp_get_thread_num() == 0 and omp_get_wtime() - start_time > 0.5){
                 start_time = omp_get_wtime();
-                showTopN(numEvaluated, topN.getSorted());
+                showTopN(topN.getSorted(), "Evaluated: " + std::to_string(numEvaluated));
             }
         }
 //        double time = omp_get_wtime() - start_time;
         std::cout << "\n" << time << std::endl;
     }
 
-    GeneratedStrategy saveGeneratedStrategy(const Backtest& backtest){
+    GeneratedStrategy saveGeneratedStrategy(const Backtest &backtest) {
         std::string name = get_random_name();
         while (jsonDB["generated"].contains(name)){
             name = get_random_name();
@@ -220,22 +316,32 @@ private:
         return strategy;
     }
 
-    void showTopN(int numEvaluated, const std::vector<GeneratedStrategy>& vect){
+
+
+    void showTopN( const std::vector<GeneratedStrategy>& vect, std::string header = ""){
 
         fort::char_table table;
         table.set_cell_text_align(fort::text_align::center);
         table.set_border_style(FT_BOLD_STYLE);
         table.row(0).set_cell_bg_color(fort::color::black);
-        table[0][0].set_cell_span(9);
-        table <<  fort::header  << "Evaluated: " + std::to_string(numEvaluated) << fort::endr;
-        table << fort::header << "Name"  << "CAGR/AvgDD" << "# Trades" << "Max DD (%)" << "Profit Factor" << "Win %" << "Return %" << "CAGR (%)" << "Created At" << fort::endr << fort::separator;
+        table[0][0].set_cell_span(10);
+        if(header.length() > 0){
+            table <<  fort::header  << header << fort::endr;
+        } else {
+            table <<  fort::header  << "Generated Strategies" << fort::endr;
+        }
+
+        table << fort::header << "Name"  << "CAGR/AvgDD" << "# Trades" << "Max DD (%)" << "Profit Factor" << "Win %" << "Return %" << "CAGR (%)" << "Dataset" << "Created At" << fort::endr << fort::separator;
         for(auto& b: vect){
-            json metrics = b.toJson()["content"]["metrics"];
+            json bJson = b.toJson();
+            json metrics = bJson["metrics"];
+            json dataset = bJson["dataset"];
             table << b.name <<  metrics["CAGROverAvgDrawDown"].get<double>()
                   << metrics["numTrades"].get<int>() << metrics["maxDrawDown"].get<double>()*100
                   << metrics["profitFactor"].get<double>() << metrics["winRate"].get<double>()*100
                   << metrics["totalReturn"].get<double>() *100 << metrics["CAGR"].get<double>() *100
-                  << b.createdAt << fort::endr << fort::separator;
+                  << dataset["baseAsset"].get<std::string>() + "/" + dataset["quoteAsset"].get<std::string>() + " (" + dataset["interval"].get<std::string>() + ")"
+                  << bJson["createdAt"].get<std::string>().substr(0, 19) << fort::endr << fort::separator;
         }
 
         auto table_str = table.to_string();
@@ -245,4 +351,4 @@ private:
 
     }
 };
-#endif //CLI_STRATEGY_H
+#endif //CLI_GENERATE_H
