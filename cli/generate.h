@@ -89,6 +89,12 @@ struct Generate: CryptoniteCommand {
                 filter["interval"] = subcommand->get_option("--interval")->as<std::string>();
 
                 auto generatedStrategies = loadGeneratedStrategies(filter);
+
+                if(generatedStrategies.size() == 0){
+                    std::cout << "No generated strategies match the criteria!!" << std::endl;
+                    return;
+                }
+
                 if(command->got_subcommand("list")){
                     showTopN(generatedStrategies);
                 } else {
@@ -96,7 +102,7 @@ struct Generate: CryptoniteCommand {
                     std::cout << "Press `d` to delete listed strategies: ";
                     char answer = std::cin.get();
                     if(answer == 'd') {
-                        std::cout << "Here!!" << answer;
+                        deleteGenerateStrategies(generatedStrategies);
                     }
                     return;
                 }
@@ -147,6 +153,15 @@ private:
         subcommand->add_option("--baseAsset,-b,baseAsset", "Filter by base asset")->excludes("--name");
         subcommand->add_option("--quoteAsset,-q,quoteAsset", "Filter by quote asset")->excludes("--name");
         subcommand->add_option("--interval,-i,interval", "Filter by interval")->excludes("--name");
+    }
+
+    void deleteGenerateStrategies(std::vector<GeneratedStrategy> strategies){
+        for(auto strategy: strategies){
+            std::cout << strategy.name << std::endl;
+            jsonDB["generated"].erase(strategy.name);
+        }
+
+        JsonFileHandler::write(app->get_option("--database")->as<std::string>(), jsonDB);
     }
 
     std::vector<GeneratedStrategy> loadGeneratedStrategies(json filter){
