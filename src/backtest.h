@@ -257,20 +257,19 @@ struct Backtest {
 };
 
 struct Backtester {
-    StrategyGenConfig config;
+    AcceptanceConfig acceptanceConfig;
+    DataSetConfig datasetConfig;
     Dataset dataset;
 
-    Backtester(StrategyGenConfig& config, std::string datastorePath):
-            config(config),
-            dataset(DataStore(config.dataSetConfig, datastorePath).getDataset())
+    Backtester(AcceptanceConfig& acceptanceConfig, DataSetConfig& datasetConfig, std::string datastorePath):
+            acceptanceConfig(acceptanceConfig),
+            dataset(DataStore(datasetConfig, datastorePath).getDataset())
     {
         Indicator::setup(dataset);
 
     };
 
     Backtest evaluate(const Strategy &strategy);
-
-
 };
 
 Signal computeSignal(Strategy &strategy, const Dataset &dataset);
