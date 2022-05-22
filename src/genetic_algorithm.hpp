@@ -113,6 +113,7 @@ GeneticAlgorithm<DNA>::GeneticAlgorithm(
         double mutationProbability
         ): _initialDNA{initialDNA}
 {
+
     // Ensure a minimum and even population size
     _populationSize = std::max<size_t>(4, populationSize);
 
@@ -131,6 +132,7 @@ GeneticAlgorithm<DNA>::GeneticAlgorithm(
 
     _selectionPool.reserve(_populationSize);
     createInitialPopulation();
+
 }
 
 
@@ -250,7 +252,7 @@ void GeneticAlgorithm<DNA>::evolveNextGeneration()
             child2->copyGenes(*_parentDNA2);
         }
 
-        // MUTATION  (See Tutorial)
+//         MUTATION  (See Tutorial)
         child1->mutateGenes(_mutationProbability);
         child2->mutateGenes(_mutationProbability);
     }
@@ -393,11 +395,19 @@ void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose)
         cout << "Mutation Probability: " << _mutationProbability << "\n";
     }
 
+    cout << "Before Optimization: "
+         << left << setw(10) << fixed
+         << setprecision(4)  << getBestDNAfitness() << "\n";
+
     auto printGeneration = [&]()
     {
         if(verbose){
             cout << "Generation: "
                  << left << setw(5) << getNumEvolvedGenerations()
+                 << "Gen Improvements: "
+                 << left << setw(5) << getNumGenerationImprovements()
+                 << "DNA Improvements: "
+                 << left << setw(5) << _numFitnessImprovements
                  << "   Best Fitness: "
                  << left << setw(10) << fixed
                  << setprecision(4)  << getBestDNAfitness() << "\n";
