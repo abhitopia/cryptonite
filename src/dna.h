@@ -38,7 +38,9 @@ private:
     double _rangeMax{0.0};
     double _value{0.0};
     double _delta{1.0};
+    unsigned int _steps{0};
     double _numBits{0};
+    string _maxBits{""};
     string _bits{""};
 
 public:
@@ -50,7 +52,8 @@ public:
     void setBitString(string bits);
     void initRandomValue();
     void mutate(double probability = -1.0);
-
+    void recombine(const Gene& gene1, const Gene& gene2);
+    bool isValidBitString(string bitString);
 };
 
 
@@ -58,7 +61,9 @@ class DNA {
 protected:
     unsigned int _numBits{0};
     map<string, Gene> _genes{};
-    double _fitness{-std::numeric_limits<double>::infinity()};
+    double _fitness{-std::numeric_limits<double>::max()}; // important to not use -ve ::inf() as release precision will cause problems
+//    double _fitness{-9.0}; // important to not use -ve ::inf() as release precision will cause problems
+
     string getBitString() const;
     void setBitString(string bitString);
 
