@@ -67,8 +67,6 @@ public:
 
     size_t getPopulationSize() const;
     size_t getNumEvolvedGenerations() const;
-    size_t getNumFitnessEvaluations() const;
-    size_t getNumFitnessImprovements() const;
     size_t getNumGenerationImprovements() const;
     double getBestDNAfitness() const;
     void optimize(unsigned int maxGenNoImprove = 10, bool verbose = false);
@@ -76,11 +74,10 @@ public:
 
 private:
     inline void createInitialPopulation();
-    inline void calcAllFitnessValues();
     inline void createSelectionPool();
-    inline void selectParentsFromPool();
 
 private:
+    void updateBestDNA();
     const DNA& _initialDNA;
     size_t _populationSize;
     size_t _halfPopulationSize;
@@ -90,12 +87,8 @@ private:
     vector<shared_ptr<DNA>> _population;
     vector<shared_ptr<DNA>> _nextGeneration;
     vector<size_t> _selectionPool;
-    shared_ptr<DNA> _parentDNA1{nullptr};
-    shared_ptr<DNA> _parentDNA2{nullptr};
     DNA _bestDNA{};
     size_t _numEvolvedGenerations{0};
-    size_t _numFitnessEvaluations{0};
-    size_t _numFitnessImprovements{0};
     size_t _numGenerationImprovements{0};
     size_t _genLastImproved{0};
 };
@@ -151,20 +144,6 @@ size_t GeneticAlgorithm<DNA>::getNumEvolvedGenerations() const
 
 
 template<typename DNA>
-size_t GeneticAlgorithm<DNA>::getNumFitnessEvaluations() const
-{
-    return _numFitnessEvaluations;
-}
-
-
-template<typename DNA>
-size_t GeneticAlgorithm<DNA>::getNumFitnessImprovements() const
-{
-    return _numFitnessImprovements;
-}
-
-
-template<typename DNA>
 size_t GeneticAlgorithm<DNA>::getNumGenerationImprovements() const
 {
     return _numGenerationImprovements;
@@ -186,36 +165,45 @@ inline void GeneticAlgorithm<DNA>::createInitialPopulation()
     _population.resize(_populationSize);
     _nextGeneration.resize(_populationSize);
 
+    #pragma omp parallel for default(none) shared(_population, _initialDNA, _nextGeneration)
     for (size_t iDNA = 0; iDNA < _populationSize; iDNA++)
     {
         _population[iDNA] = std::make_unique<DNA>(_initialDNA);
         _population[iDNA]->initGenesWithRandomValues();
+        _population[iDNA]->calcFitness(); // Fitness Evaluation
 
         _nextGeneration[iDNA] = std::make_unique<DNA>(_initialDNA);
         _nextGeneration[iDNA]->initGenesWithRandomValues();
     }
 
-    // FITNESS EVALUATION
-    calcAllFitnessValues();
     _numEvolvedGenerations = 1;
+    updateBestDNA();
 }
 
+struct PopulationArgMax {
+    double max{-std::numeric_limits<double>::max()};
+    size_t index{0};
+};
 
 template<typename DNA>
-inline void GeneticAlgorithm<DNA>::calcAllFitnessValues()
-{
-    for (size_t iDNA = 0; iDNA < _populationSize; iDNA++)
-    {
-        _population[iDNA]->calcFitness();
-        _numFitnessEvaluations++;
-        if (_population[iDNA]->getFitness() > _bestDNA.getFitness())
-        {
-            _bestDNA = *_population[iDNA];
-            _numFitnessImprovements++;
+void GeneticAlgorithm<DNA>::updateBestDNA() {
+    #pragma omp declare reduction(maximo : struct PopulationArgMax : omp_out = omp_in.max > omp_out.max ? omp_in : omp_out)
+    PopulationArgMax argMax;
+
+    #pragma omp parallel for default(none) reduction(maximo:argMax) shared(_population, _populationSize)
+    for(size_t iDNA = 0; iDNA < _populationSize; iDNA++){
+        if (_population[iDNA]->getFitness() > argMax.max){
+            argMax.max = _population[iDNA]->getFitness();
+            argMax.index = iDNA;
         }
     }
-}
 
+    if(argMax.max > _bestDNA.getFitness()){
+        _bestDNA = *_population[argMax.index];
+        _numGenerationImprovements++;
+        _genLastImproved = _numEvolvedGenerations;
+    }
+}
 
 template<typename DNA>
 void GeneticAlgorithm<DNA>::evolveNextGeneration()
@@ -232,10 +220,15 @@ void GeneticAlgorithm<DNA>::evolveNextGeneration()
     // You can experiment with a variable number of children or let the
     // population size increase or decrease over time.
 
+    #pragma omp parallel for default(none) shared(_selectionPool, _population, _nextGeneration, _halfPopulationSize)
     for (size_t iDNA = 0; iDNA < _halfPopulationSize; iDNA++)
     {
-        // SELECTION
-        selectParentsFromPool();
+
+        const auto dnaIdx1 = _selectionPool[cryptonite::randint(_selectionPool.size())];
+        const auto dnaIdx2 = _selectionPool[cryptonite::randint(_selectionPool.size())];
+
+        auto _parentDNA1 = _population[dnaIdx1];
+        auto _parentDNA2 = _population[dnaIdx2];
 
         // RECOMBINATION  (See Tutorial)
         auto child1 = _nextGeneration[iDNA];
@@ -255,23 +248,17 @@ void GeneticAlgorithm<DNA>::evolveNextGeneration()
 //         MUTATION  (See Tutorial)
         child1->mutateGenes(_mutationProbability);
         child2->mutateGenes(_mutationProbability);
+        child1->calcFitness();
+        child2->calcFitness();
     }
 
     // REPLACEMENT  (See Tutorial)
     _population.swap(_nextGeneration);
 
+
     // FITNESS EVALUATION  (See Tutorial)
-    const double previousBestFitness = _bestDNA.getFitness();
-    calcAllFitnessValues();
-
-    // PERFORMANCE STATISTICS
-
-    if (_bestDNA.getFitness() > previousBestFitness)
-    {
-        _numGenerationImprovements++;
-        _genLastImproved = _numEvolvedGenerations;
-    }
     _numEvolvedGenerations++;
+    updateBestDNA();
 }
 
 
@@ -365,27 +352,6 @@ inline void GeneticAlgorithm<DNA>::createSelectionPool()
 
 
 template<typename DNA>
-inline void GeneticAlgorithm<DNA>::selectParentsFromPool()
-{
-    // Randomly select two DNAs from the selection pool.
-    // DNAs with better fitness values have a higher chance to get selected
-    // because they have a higher appearance in the selection pool.
-    // It is tolerable that sometimes both parents will be the same DNA.
-
-    const auto poolIdx1 = cryptonite::randint(_selectionPool.size());
-//            getRandomIntegerInRange<size_t>(0, _selectionPool.size() - 1);
-
-    const auto poolIdx2 = cryptonite::randint(_selectionPool.size());
-//            getRandomIntegerInRange<size_t>(0, _selectionPool.size() - 1);
-
-    const auto dnaIdx1 = _selectionPool[poolIdx1];
-    const auto dnaIdx2 = _selectionPool[poolIdx2];
-
-    _parentDNA1 = _population[dnaIdx1];
-    _parentDNA2 = _population[dnaIdx2];
-}
-
-template<typename DNA>
 void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose) {
     if(verbose){
         cout << "\nOPTIMIZATION STARTED ...\n\n";
@@ -406,8 +372,8 @@ void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose)
                  << left << setw(5) << getNumEvolvedGenerations()
                  << "Gen Improvements: "
                  << left << setw(5) << getNumGenerationImprovements()
-                 << "DNA Improvements: "
-                 << left << setw(5) << _numFitnessImprovements
+                 << "Last Gen Improved: "
+                 << left << setw(5) << _genLastImproved
                  << "   Best Fitness: "
                  << left << setw(10) << fixed
                  << setprecision(4)  << getBestDNAfitness() << "\n";
@@ -422,6 +388,7 @@ void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose)
         printGeneration();
     }
 }
+
 
 
 #endif //CRYPTONITE_GENETIC_ALGORITHM_HPP
