@@ -48,6 +48,14 @@ EntryCriteria EntryCriteria::generate(int num_indicators, double exploration_pro
     return EntryCriteria(Criteria::generate_configs(num_indicators, exploration_prob));
 }
 
+EntryCriteria EntryCriteria::fromJson(json j) {
+    std::vector<IndicatorConfig> config{};
+    for(const json& configJson: j){
+        config.emplace_back(IndicatorConfig::fromJson(configJson));
+    }
+    return EntryCriteria(config);
+}
+
 json Criteria::toJson() const {
     json j;
     for (auto &config: configs){
@@ -73,6 +81,14 @@ ExitCriteria ExitCriteria::generate(int num_indicators, double exploration_prob)
     return ExitCriteria(Criteria::generate_configs(num_indicators, exploration_prob));
 }
 
+ExitCriteria ExitCriteria::fromJson(json j) {
+    std::vector<IndicatorConfig> config{};
+    for(const json& configJson: j){
+        config.push_back(IndicatorConfig::fromJson(configJson));
+    }
+    return ExitCriteria(config);
+}
+
 json PositionOpenConfig::toJson() const {
     json j;
     j["isAbsolute"] = isAbsolute;
@@ -93,6 +109,12 @@ PositionOpenConfig::PositionOpenConfig(double quote_size, bool is_absolute, bool
 
 }
 
+PositionOpenConfig PositionOpenConfig::fromJson(json j) {
+    return PositionOpenConfig(j["quoteSize"].get<double>(),
+                              j["isAbsolute"].get<bool>(),
+                              j["bidirectional"].get<bool>());
+}
+
 json PositionCloseConfig::toJson() const {
     json j;
     j["takeProfit"] = takeProfit;
@@ -111,6 +133,13 @@ PositionCloseConfig::PositionCloseConfig(double tp, double sl, bool trailing_sl)
     this->takeProfit = tp;
     this->stopLoss = sl;
     this->trailingSl = trailing_sl;
+}
+
+PositionCloseConfig PositionCloseConfig::fromJson(json j) {
+
+    auto tp= j["takeProfit"].is_null() ? -1.0 : j["takeProfit"].get<double>();
+    auto sl = j["stopLoss"].is_null() ? -1.0 : j["stopLoss"].get<double>();
+    return PositionCloseConfig(tp, sl,j["trailingSl"].get<bool>());
 }
 
 
@@ -156,6 +185,15 @@ Strategy Strategy::generate(const StrategyGenConfig &config) {
                     exit_criteria,
                     config.depositConfig,
                     config.brokerConfig);
+}
+
+Strategy Strategy::fromJson(json j) {
+    return Strategy(PositionOpenConfig::fromJson(j["positionOpenConfig"]),
+                    PositionCloseConfig::fromJson(j["positionCloseConfig"]),
+                    EntryCriteria::fromJson(j["entryCriteria"]),
+                    ExitCriteria::fromJson(j["exitCriteria"]),
+                    DepositConfig::fromJson(j["depositConfig"]),
+                    BrokerConfig::fromJson(j["brokerConfig"]));
 }
 
 

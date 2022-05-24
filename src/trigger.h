@@ -37,6 +37,7 @@ public:
     std::string getComparand();
     std::string getComparator();
     json toJson();
+    static std::shared_ptr<Trigger> fromJson(json j);
 };
 
 class Falls;

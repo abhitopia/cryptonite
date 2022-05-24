@@ -16,12 +16,6 @@ int sample_gaussian_int(double mean, double sigma, int min, int max) {
 }
 
 
-json Indicator::toJson() {
-    json j;
-    j["name"] = name;
-    return j;
-}
-
 std::unordered_map<std::string, double> Indicator::get_random_params(double exploration_prob) {
     std::unordered_map<std::string, double> params;
     for (auto const& [key, val] : defaults)
@@ -53,7 +47,6 @@ IndicatorConfig Indicator::generate_config(double exploration_prob) {
     config.toJson();
     return config;
 }
-
 
 spda_t Indicator::get_source(const Dataset &dataset, ApplyTo apply_to) {
     switch(apply_to){
@@ -158,7 +151,7 @@ spda_t rolling_sum(int num_bars, spda_t source, int period) {
 
 json IndicatorConfig::toJson() const {
     json j;
-    j["Indicator"] = indicator->toJson();
+    j["indicator"] = indicator->get_name();
     j["trigger"] = trigger->toJson();
     for (auto const& [key, val] : params){
         j["params"][key] = val;
@@ -166,6 +159,18 @@ json IndicatorConfig::toJson() const {
     return j;
 
 }
+
+IndicatorConfig IndicatorConfig::fromJson(json j) {
+    std::unordered_map<std::string, double> params{};
+    auto indicator = Name2Indicator[j["indicator"].get<std::string>()];
+    auto trigger = Trigger::fromJson(j["trigger"]);
+    for(const auto& [k, v]: j["params"].items()){
+        params[k] = v.get<double>();
+    }
+
+    return IndicatorConfig(trigger, params, indicator.get());
+}
+
 
 std::shared_ptr<bool[]> IndicatorConfig::compute(const Dataset &dataset, bool contra_trigger) {
     int num_bars = dataset.numBars;
@@ -577,39 +582,50 @@ std::unordered_map<std::string, spda_t> PinBar::compute(const Dataset &dataset, 
 
 
 std::vector<std::shared_ptr<Indicator>> Indicators{
-        std::make_unique<AcceleratorOscillator>(),
-        std::make_unique<AccumulationDistribution>(),
-        std::make_unique<ADX>(),
-        std::make_unique<Alligator>(),
-        std::make_unique<AverageTrueRange>(),
-        std::make_unique<BearsPower>(),
-        std::make_unique<BullsPower>(),
-        std::make_unique<BollingerBands>(),
-        std::make_unique<CommodityChannelIndex>(),
-        std::make_unique<DeMarker>(),
-        std::make_unique<DirectionalIndicators>(),
-        std::make_unique<DonchianChannel>(),
-        std::make_unique<Envelopes>(),
-        std::make_unique<ForceIndex>(),
-        std::make_unique<MACD>(),
-        std::make_unique<MACDSignal>(),
-        std::make_unique<Momentum>(),
-        std::make_unique<MoneyFlowIndex>(),
-        std::make_unique<MovingAverage>(),
-        std::make_unique<MovingAverageOscillator>(),
-        std::make_unique<MovingAverageCrossOver>(),
-        std::make_unique<OnBalanceVolume>(),
-        std::make_unique<RelativeStrengthIndex>(),
-        std::make_unique<RelativeVigorIndex>(),
-        std::make_unique<RelativeVigorIndexSignal>(),
-        std::make_unique<StandardDeviation>(),
-        std::make_unique<Stochastic>(),
-        std::make_unique<StochasticSignal>(),
-        std::make_unique<Volumes>(),
-        std::make_unique<WilliamsPercentRange>(),
-        std::make_unique<CandleColor>(),
-        std::make_unique<PinBar>()
+        std::make_shared<AcceleratorOscillator>(),
+        std::make_shared<AccumulationDistribution>(),
+        std::make_shared<ADX>(),
+        std::make_shared<Alligator>(),
+        std::make_shared<AverageTrueRange>(),
+        std::make_shared<BearsPower>(),
+        std::make_shared<BullsPower>(),
+        std::make_shared<BollingerBands>(),
+        std::make_shared<CommodityChannelIndex>(),
+        std::make_shared<DeMarker>(),
+        std::make_shared<DirectionalIndicators>(),
+        std::make_shared<DonchianChannel>(),
+        std::make_shared<Envelopes>(),
+        std::make_shared<ForceIndex>(),
+        std::make_shared<MACD>(),
+        std::make_shared<MACDSignal>(),
+        std::make_shared<Momentum>(),
+        std::make_shared<MoneyFlowIndex>(),
+        std::make_shared<MovingAverage>(),
+        std::make_shared<MovingAverageOscillator>(),
+        std::make_shared<MovingAverageCrossOver>(),
+        std::make_shared<OnBalanceVolume>(),
+        std::make_shared<RelativeStrengthIndex>(),
+        std::make_shared<RelativeVigorIndex>(),
+        std::make_shared<RelativeVigorIndexSignal>(),
+        std::make_shared<StandardDeviation>(),
+        std::make_shared<Stochastic>(),
+        std::make_shared<StochasticSignal>(),
+        std::make_shared<Volumes>(),
+        std::make_shared<WilliamsPercentRange>(),
+        std::make_shared<CandleColor>(),
+        std::make_shared<PinBar>()
 };
+
+std::unordered_map<std::string,std::shared_ptr<Indicator>> _setName2Indicator(){
+    std::unordered_map<std::string,std::shared_ptr<Indicator>> result{};
+    for (auto& it: Indicators) {
+        result[it->get_name()] = it;
+    }
+    return result;
+}
+
+std::unordered_map<std::string,std::shared_ptr<Indicator>> Name2Indicator = _setName2Indicator();
+
 
 void Indicator::setup(const Dataset &dataset, int seed) {
     cryptonite::seed(seed);
@@ -636,3 +652,8 @@ void Indicator::setup(const Dataset &dataset, int seed) {
         }
     }
 }
+
+std::string Indicator::get_name() {
+    return name;
+}
+

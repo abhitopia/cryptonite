@@ -40,6 +40,7 @@ struct IndicatorConfig{
         this->params = params;
     }
     json toJson() const;
+    static IndicatorConfig fromJson(json j);
     std::shared_ptr<bool[]> compute(const Dataset &dataset, bool contra_trigger = false);
 };
 
@@ -66,7 +67,6 @@ public:
     virtual std::unordered_map<std::string, spda_t> compute(const Dataset &dataset, const IndicatorConfig &config) = 0;
     IndicatorConfig generate_config(double exploration_prob=0.5);
     std::unordered_map<std::string, double> get_random_params(double exploration_prob=0.5);
-    json toJson();
     spda_t get_source(const Dataset &dataset, ApplyTo apply_to);
     spda_t apply_ma(int num_bars, double period, spda_t source, MAMethod ma_method);
     virtual bool validate_config(IndicatorConfig &config);
@@ -79,9 +79,8 @@ public:
         }
         return false;
     }
-
+    std::string get_name();
     static void setup(const Dataset& dataset, int seed=-1);
-
 };
 
 class AcceleratorOscillator: public Indicator {
@@ -591,7 +590,7 @@ public:
 };
 
 extern std::vector<std::shared_ptr<Indicator>> Indicators;
-
+extern std::unordered_map<std::string,std::shared_ptr<Indicator>> Name2Indicator;
 
 
 #endif //CRYPTONITE_INDICATOR_H

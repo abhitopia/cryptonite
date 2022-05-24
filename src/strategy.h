@@ -39,7 +39,7 @@ struct EntryCriteria : Criteria {
     std::shared_ptr<bool[]> reduce(int num_bars, const std::vector<std::shared_ptr<bool []>> &trig_outputs) const override;
 
     static EntryCriteria generate(int num_indicators, double exploration_prob=0.5);
-
+    static EntryCriteria fromJson(json j);
 };
 
 struct ExitCriteria : Criteria {
@@ -48,7 +48,7 @@ struct ExitCriteria : Criteria {
     std::shared_ptr<bool[]> reduce(int num_bars, const std::vector<std::shared_ptr<bool []>> &trig_outputs) const override;
 
     static ExitCriteria generate(int num_indicators, double exploration_prob=0.5);
-
+    static ExitCriteria fromJson(json j);
 };
 
 
@@ -60,7 +60,7 @@ struct PositionOpenConfig {
     PositionOpenConfig(double quote_size = 1.0, bool is_absolute = false, bool bidirectional = true);
 
     json toJson() const;
-
+    static PositionOpenConfig fromJson(json j);
 };
 
 
@@ -71,6 +71,7 @@ struct PositionCloseConfig {
     PositionCloseConfig(double tp = INFINITY, double sl = INFINITY, bool trailing_sl = true);
 
     json toJson() const;
+    static PositionCloseConfig fromJson(json j);
 
 };
 
@@ -93,6 +94,7 @@ struct Strategy {
     static Strategy generate(const StrategyGenConfig& config);
 
     json toJson() const;
+    static Strategy fromJson(json j);
 };
 
 

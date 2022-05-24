@@ -217,3 +217,28 @@ json Trigger::toJson() {
     j["comparator"] = _comparator;
     return j;
 }
+
+std::shared_ptr<Trigger> Trigger::fromJson(json j) {
+    std::string name = j["name"].get<std::string>();
+    std::string comparand = j["comparand"].get<std::string>();
+    std::string comparator = j["comparator"].get<std::string>();
+
+    if(name=="rises"){
+        return std::make_shared<Rises>(comparand);
+    }else if(name=="falls"){
+        return std::make_shared<Falls>(comparand);
+    }else if(name=="changes_direction_upward"){
+        return std::make_shared<ChangesDirectionUpward>(comparand);
+    }else if(name=="changes_direction_downward"){
+        return std::make_shared<ChangesDirectionDownward>(comparand);
+    }else if(name=="higher_than"){
+        return std::make_shared<HigherThan>(comparand, comparator);
+    }else if(name=="lower_than"){
+        return std::make_shared<LowerThan>(comparand, comparator);
+    }else if(name=="crosses_upward"){
+        return std::make_shared<CrossesUpward>(comparand, comparator);
+    }else if(name=="crosses_downward"){
+        return std::make_shared<CrossesDownward>(comparand, comparator);
+    }
+    std::runtime_error("Aborting for unrecognised trigger: " + name);
+}
