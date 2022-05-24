@@ -108,24 +108,22 @@ void Gene::recombine(const Gene& gene1, const Gene& gene2) {
     setBitString(newDna);
 }
 
-
-
-string DNA::getBitString() const {
-    string _bits = "";
-    for (auto& it: _genes){
-        _bits += it.second.getBitString();
-    }
-    return _bits;
-}
-
-void DNA::setBitString(string bitString) {
-    size_t p = 0;
-    for (auto& it: _genes){
-        bitString.substr(p, it.second.getNumBits());
-        it.second.setBitString(bitString.substr(0, it.second.getNumBits()));
-        p += it.second.getNumBits();
-    }
-}
+//string DNA::getBitString() const {
+//    string _bits = "";
+//    for (auto& it: _genes){
+//        _bits += it.second.getBitString();
+//    }
+//    return _bits;
+//}
+//
+//void DNA::setBitString(string bitString) {
+//    size_t p = 0;
+//    for (auto& it: _genes){
+//        bitString.substr(p, it.second.getNumBits());
+//        it.second.setBitString(bitString.substr(0, it.second.getNumBits()));
+//        p += it.second.getNumBits();
+//    }
+//}
 
 DNA::DNA(map<string, Gene> genes) {
     _genes = genes;

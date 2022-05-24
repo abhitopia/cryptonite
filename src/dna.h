@@ -62,10 +62,9 @@ protected:
     unsigned int _numBits{0};
     map<string, Gene> _genes{};
     double _fitness{-std::numeric_limits<double>::max()}; // important to not use -ve ::inf() as release precision will cause problems
-//    double _fitness{-9.0}; // important to not use -ve ::inf() as release precision will cause problems
 
-    string getBitString() const;
-    void setBitString(string bitString);
+//    string getBitString() const;
+//    void setBitString(string bitString);
 
 public:
     DNA(map<string, Gene> genes = {});
