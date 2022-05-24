@@ -14,6 +14,8 @@
 #include "../src/backtest.h"
 #include "command.h"
 #include "../src/top_n_container.h"
+#include "../src/genetic_algorithm.hpp"
+
 
 
 struct GeneratedStrategy {
@@ -63,6 +65,8 @@ struct GeneratedStrategy {
 };
 
 
+
+
 struct Generate: CryptoniteCommand {
     json jsonDB{};
 
@@ -74,12 +78,15 @@ struct Generate: CryptoniteCommand {
 
             std::string name = command->get_option("--config")->as<std::string>();
             int version =  command->get_option("--version")->count() > 0 ? command->get_option("--version")->as<int>() : -1;
-            if(command->got_subcommand("list") || command->got_subcommand("delete")){
+            if(command->got_subcommand("list") || command->got_subcommand("delete")
+            || command->got_subcommand("optimize")){
                 CLI::App* subcommand;
                 if(command->got_subcommand("list")){
                     subcommand = command->get_subcommand("list");
-                } else {
+                } else if(command->got_subcommand("delete")){
                     subcommand = command->get_subcommand("delete");
+                } else {
+                    subcommand = command->get_subcommand("optimize");
                 }
 
                 json filter;
@@ -97,7 +104,7 @@ struct Generate: CryptoniteCommand {
 
                 if(command->got_subcommand("list")){
                     showTopN(generatedStrategies);
-                } else {
+                } else if(command->got_subcommand("delete")){
                     showTopN(generatedStrategies, "Are you sure you want to delete these?");
                     std::cout << "Press `d` to delete listed strategies: ";
                     char answer = std::cin.get();
@@ -105,6 +112,8 @@ struct Generate: CryptoniteCommand {
                         deleteGenerateStrategies(generatedStrategies);
                     }
                     return;
+                } else if(command->got_subcommand("optimize")){
+                    optimize(generatedStrategies);
                 }
 
                 return;
@@ -138,15 +147,23 @@ struct Generate: CryptoniteCommand {
 
         auto listCommand = command->add_subcommand("list", "List generated strategies.");
         auto deleteCommand = command->add_subcommand("delete", "Delete generated strategies.");
+        auto optimizeCommand = command->add_subcommand("optimize", "Optimize generated strategies.");
 
         addSubcommandOptions(listCommand);
         addSubcommandOptions(deleteCommand);
+        addSubcommandOptions(optimizeCommand);
         command->fallthrough(true);
     }
 
 
 
 private:
+    void optimize(std::vector<GeneratedStrategy> strategies){
+        for(auto generatedStrategy: strategies){
+            Strategy strategy = Strategy::fromJson(generatedStrategy.strategy);
+            std::cout << strategy.toJson().dump(4) << std::endl;
+        }
+    }
 
     void addSubcommandOptions(CLI::App* subcommand){
         subcommand->add_option("--name,-n", "Filter by generated strategy name");
@@ -157,7 +174,6 @@ private:
 
     void deleteGenerateStrategies(std::vector<GeneratedStrategy> strategies){
         for(auto strategy: strategies){
-            std::cout << strategy.name << std::endl;
             jsonDB["generated"].erase(strategy.name);
         }
 
@@ -297,7 +313,7 @@ private:
 
     void generate(json config){
         auto strategyGenConfig = getStrategyConfig(config);
-        Backtester backtester{strategyGenConfig, app->get_option("--datastore")->as<std::string>()};
+        Backtester backtester{strategyGenConfig.acceptanceConfig, strategyGenConfig.dataSetConfig, app->get_option("--datastore")->as<std::string>()};
 
         double start_time = omp_get_wtime();
         auto topN = TopNContainer<GeneratedStrategy>{10};
@@ -312,7 +328,7 @@ private:
             numEvaluated += 1;
             if (omp_get_thread_num() == 0 and omp_get_wtime() - start_time > 0.5){
                 start_time = omp_get_wtime();
-                showTopN(topN.getSorted(), "Evaluated: " + std::to_string(numEvaluated));
+                showTopN(topN.getSorted(), "Evaluated: " + std::to_string(numEvaluated), true);
             }
         }
 //        double time = omp_get_wtime() - start_time;
@@ -333,7 +349,7 @@ private:
 
 
 
-    void showTopN( const std::vector<GeneratedStrategy>& vect, std::string header = ""){
+    void showTopN( const std::vector<GeneratedStrategy>& vect, std::string header = "", bool rolling = false){
 
         fort::char_table table;
         table.set_cell_text_align(fort::text_align::center);
@@ -360,10 +376,13 @@ private:
         }
 
         auto table_str = table.to_string();
-        int numNewLines = std::count(table_str.begin(), table_str.end(), '\n');
-        std::cout << table_str << "\033[100D" << "\033[" + std::to_string(numNewLines) + "A";
 
-
+        if(rolling){
+            int numNewLines = std::count(table_str.begin(), table_str.end(), '\n');
+            std::cout << table_str << "\033[100D" << "\033[" + std::to_string(numNewLines) + "A";
+        } else{
+            std::cout << table_str << std::endl;
+        }
     }
 };
 #endif //CLI_GENERATE_H

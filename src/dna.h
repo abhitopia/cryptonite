@@ -25,6 +25,7 @@ using std::map;
 using std::unique_ptr;
 
 #include "random.h"
+#include "strategy.h"
 
 
 #define NUM_BITS 16
@@ -80,11 +81,22 @@ public:
 //        }
 //    }
 
-    void copyGenes(const DNA& copyFrom);;
+    void copyGenes(const DNA& copyFrom);
     void recombineGenes(std::shared_ptr<DNA> parent1, std::shared_ptr<DNA> parent2);
-    void mutateGenes(double probability=-1.0);;
+    void mutateGenes(double probability=-1.0);
     virtual void calcFitness() = 0;
 };
 
+
+class strategyDNA: public DNA {
+public:
+    static strategyDNA fromStrategy(Strategy& strategy){
+
+    }
+
+    void calcFitness() override {
+
+    }
+};
 
 #endif //CRYPTONITE_DNA_H
