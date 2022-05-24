@@ -137,7 +137,7 @@ class CrossesDownward : public Trigger {
 public:
     CrossesDownward() = delete;
     CrossesDownward(std::string comparand, std::string comparator): Trigger(std::move(comparand), std::move(comparator)) {
-        name="crosses_upward";
+        name="crosses_downward";
     };
     series_b compute(const int &len, series_d &comparand) override{return UnimplementedError();};
     series_b compute(const int &len, series_d &comparand, series_d &comparator) override;
