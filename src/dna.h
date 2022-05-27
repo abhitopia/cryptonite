@@ -26,6 +26,7 @@ using std::unique_ptr;
 
 #include "random.h"
 #include "strategy.h"
+#include "backtest.h"
 
 
 #define NUM_BITS 16
@@ -88,10 +89,36 @@ public:
 };
 
 
-class strategyDNA: public DNA {
-public:
-    static strategyDNA fromStrategy(Strategy& strategy){
+class StrategyDNA: public DNA {
+    std::shared_ptr<Backtester> _backtester{nullptr};
+    std::shared_ptr<Strategy> _strategy{nullptr};
 
+    void initGenes(){
+        json j = _strategy->toJson().flatten();
+        std::cout << j.dump(4) << std::endl;
+
+        for(auto& [path, value]: j.items()) {
+            if (path.find("/params/") != std::string::npos){
+                if(path.find("/apply_to") != std::string::npos || path.find("/ma_method") != std::string::npos){
+                    continue;
+                }
+                std::cout << path << " " << value << std::endl;
+            } else if(path == "/positionCloseConfig/stopLoss" && value.get<double>() > 0){
+                    std::cout << path << " " << value << std::endl;
+            } else if(path == "/positionCloseConfig/takeProfit" && value.get<double>() > 0){
+                    std::cout << path << " " << value << std::endl;
+            }
+
+        }
+        int doSOmething = 1;
+    }
+
+public:
+    StrategyDNA(map<string, Gene> genes = {}): DNA(genes){};
+    StrategyDNA(std::shared_ptr<Backtester> backtester, std::shared_ptr<Strategy> strategy){
+        _backtester = backtester;
+        _strategy = strategy;
+        initGenes();
     }
 
     void calcFitness() override {
