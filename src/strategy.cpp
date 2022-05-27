@@ -117,17 +117,17 @@ PositionOpenConfig PositionOpenConfig::fromJson(json j) {
 
 json PositionCloseConfig::toJson() const {
     json j;
-    j["takeProfit"] = takeProfit;
-    j["stopLoss"] = stopLoss;
+    j["takeProfit"] = std::isinf(takeProfit) ? -1.0 : takeProfit;
+    j["stopLoss"] = std::isinf(stopLoss) ? -1.0 : stopLoss;
     j["trailingSl"] = trailingSl;
     return j;
 }
 
 PositionCloseConfig::PositionCloseConfig(double tp, double sl, bool trailing_sl) {
-    if(tp < 0) {
+    if(tp <= 0) {
         tp = INFINITY;
     }
-    if(sl < 0){
+    if(sl <= 0){
         sl = INFINITY;
     }
     this->takeProfit = tp;
@@ -136,7 +136,6 @@ PositionCloseConfig::PositionCloseConfig(double tp, double sl, bool trailing_sl)
 }
 
 PositionCloseConfig PositionCloseConfig::fromJson(json j) {
-
     auto tp= j["takeProfit"].is_null() ? -1.0 : j["takeProfit"].get<double>();
     auto sl = j["stopLoss"].is_null() ? -1.0 : j["stopLoss"].get<double>();
     return PositionCloseConfig(tp, sl,j["trailingSl"].get<bool>());
