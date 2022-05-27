@@ -15,7 +15,7 @@
 #include "command.h"
 #include "../src/top_n_container.h"
 #include "../src/genetic_algorithm.hpp"
-
+#include "../src/dna.h"
 
 
 struct GeneratedStrategy {
@@ -69,8 +69,10 @@ struct GeneratedStrategy {
 
 struct Generate: CryptoniteCommand {
     json jsonDB{};
+    DataStore datastore{};
 
     void parse() override {
+        datastore = DataStore{app->get_option("--datastore")->as<std::string>()};
         if(command->count() > 0){
             jsonDB = JsonFileHandler::read(app->get_option("--database")->as<std::string>(), true);
             if(!jsonDB.contains("generated"))
@@ -159,9 +161,17 @@ struct Generate: CryptoniteCommand {
 
 private:
     void optimize(std::vector<GeneratedStrategy> strategies){
+
+
         for(auto generatedStrategy: strategies){
-            Strategy strategy = Strategy::fromJson(generatedStrategy.strategy);
-            std::cout << strategy.toJson().dump(4) << std::endl;
+            DataSetConfig dataSetConfig = DataSetConfig::fromJson(generatedStrategy.dataset);
+            std::cout << dataSetConfig.toJson().dump(4) << std::endl;
+            AcceptanceConfig acceptanceConfig{};
+
+            auto strategy = std::make_shared<Strategy>(Strategy::fromJson(generatedStrategy.strategy));
+            auto backtester = std::make_shared<Backtester>(acceptanceConfig,
+                                  datastore.getDataset(dataSetConfig));
+            StrategyDNA strategyDna{backtester, strategy};
         }
     }
 
@@ -313,7 +323,7 @@ private:
 
     void generate(json config){
         auto strategyGenConfig = getStrategyConfig(config);
-        Backtester backtester{strategyGenConfig.acceptanceConfig, strategyGenConfig.dataSetConfig, app->get_option("--datastore")->as<std::string>()};
+        Backtester backtester{strategyGenConfig.acceptanceConfig, datastore.getDataset(strategyGenConfig.dataSetConfig)};
 
         double start_time = omp_get_wtime();
         auto topN = TopNContainer<GeneratedStrategy>{10};
