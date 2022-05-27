@@ -50,8 +50,8 @@ struct Data: CryptoniteCommand {
                 return;
             }
 
-            auto ds = DataStore(info, app->get_option("--datastore")->as<std::string>());
-            auto dataset = ds.getDataset();
+            auto ds = DataStore( app->get_option("--datastore")->as<std::string>());
+            auto dataset = ds.getDataset(info);
             fort::char_table table;
             table.set_cell_text_align(fort::text_align::center);
             table.set_border_style(FT_BOLD_STYLE);

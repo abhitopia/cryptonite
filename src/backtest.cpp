@@ -214,7 +214,7 @@ Equity Backtest::exitShort(int bar, double lastPrice, const Equity& equity, cons
 
 
 Backtest Backtester::evaluate(const Strategy &strategy) {
-    Backtest backtest{strategy, datasetConfig};
+    Backtest backtest{strategy, dataset.dataSetConfig};
     Signal signal = computeSignal(strategy, dataset);
 //    auto acceptanceConfig = acceptanceConfig;
 

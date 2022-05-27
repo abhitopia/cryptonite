@@ -8,6 +8,7 @@
 #include <string>
 #include <filesystem>
 #include <iostream>
+#include <unordered_map>
 #include "binance.h"
 #include "json_file_handler.h"
 #include "../include/progress.hpp"
@@ -17,12 +18,10 @@
 
 namespace fs = std::filesystem;
 
-
-
-class DataStore {
+class DataSetManager {
     fs::path storePath{};
+    DataSetContainer dataSetContainer{};
     json dataJson;
-    DataSetContainer dataSetContainer;
 
     void load(){
         auto api =  BinanceAPI{};
@@ -64,9 +63,9 @@ class DataStore {
             for(auto& row: newData) {
                 int timestamp = row[0].get<long>()/1000;
                 if(timestamp > lastTimestamp()){
-                        if(showBar){
-                            bar.tick();
-                        }
+                    if(showBar){
+                        bar.tick();
+                    }
 
                     dataJson.push_back(row);
                     numUpdates += 1;
@@ -109,8 +108,9 @@ class DataStore {
                 option::ForegroundColor{Color::white},
                 option::FontStyles{std::vector<FontStyle>{FontStyle::bold}},
         };
+
         for(auto& row: dataJson){
-                bar.tick();
+            bar.tick();
             timestamp = row[0].get<long>()/1000;
             if(dataSetContainer.timestamp->size() > 0){
                 long lastTimeStep = dataSetContainer.timestamp->back();
@@ -129,11 +129,6 @@ class DataStore {
         // Show cursor
         indicators::show_console_cursor(true);
         std::cout << std::endl;
-    }
-
-    void update(){
-        updateDataJson();
-        updateDataset();
     }
 
     fs::path path(){
@@ -155,19 +150,59 @@ class DataStore {
     int nextUpdateAt(){
         return lastTimestamp() + dataSetContainer.info.intervalInSeconds();
     }
-
-
-
 public:
-    DataStore(DataSetConfig info, std::string storePath): dataSetContainer(info){
-        this->storePath = fs::path(storePath);
-        load();
+
+    DataSetManager(){};
+    DataSetManager(DataSetConfig info, std::string storePath): dataSetContainer(info){
+            this->storePath = fs::path(storePath);
+            load();
     }
 
     Dataset getDataset(){
         return dataSetContainer.dataset();
     }
 
+    void update(){
+        updateDataJson();
+        updateDataset();
+    }
+
+};
+
+
+
+class DataStore {
+    fs::path storePath{};
+    std::unordered_map<std::string, DataSetManager> datasetManagerMap{};
+
+    std::string datasetConfigToKey(const DataSetConfig& datasetConfig){
+        auto j = datasetConfig.toJson();
+        return j["quoteAsset"].get<std::string>() + j["baseAsset"].get<std::string>() + j["interval"].get<std::string>();
+    }
+
+public:
+    DataStore(){};
+    DataStore(std::string storePath){
+        this->storePath = fs::path(storePath);
+    }
+
+    std::string addDataset(const DataSetConfig& datasetConfig){
+        auto key = datasetConfigToKey(datasetConfig);
+        if(datasetManagerMap.count(key) == 0){
+            datasetManagerMap[key] = DataSetManager(datasetConfig, this->storePath.string());
+        }
+        return key;
+    }
+
+    void updateDataset(const DataSetConfig& dataSetConfig){
+        auto key = addDataset(dataSetConfig);
+        datasetManagerMap[key].update();
+    }
+
+    Dataset getDataset(const DataSetConfig& datasetConfig){
+        auto key = addDataset(datasetConfig);
+        return datasetManagerMap[key].getDataset();
+    }
 };
 
 

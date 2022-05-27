@@ -258,15 +258,13 @@ struct Backtest {
 
 struct Backtester {
     AcceptanceConfig acceptanceConfig;
-    DataSetConfig datasetConfig;
     Dataset dataset;
 
-    Backtester(AcceptanceConfig& acceptanceConfig, DataSetConfig& datasetConfig, std::string datastorePath):
+    Backtester(const AcceptanceConfig& acceptanceConfig, const Dataset& dataset):
             acceptanceConfig(acceptanceConfig),
-            dataset(DataStore(datasetConfig, datastorePath).getDataset())
+            dataset(dataset)
     {
         Indicator::setup(dataset);
-
     };
 
     Backtest evaluate(const Strategy &strategy);
