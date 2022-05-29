@@ -3,6 +3,7 @@
 //
 
 #include "random.h"
+#include "constants.h"
 
 namespace cryptonite{
     RandomGenerator::RandomGenerator() {
@@ -16,7 +17,7 @@ namespace cryptonite{
     void seed(const int &seed) {
         int i;
         unsigned int _seed;
-#pragma omp parallel for private (i, _seed) default(none) firstprivate(seed) shared( _Random)
+#pragma omp parallel for private (i, _seed) default(none) firstprivate(seed) shared( _Random) if(MULTITHREADED)
         for(i=0; i < _Random->max_threads; i++){
             if(seed < 0){
                 //create seed on thread using current time

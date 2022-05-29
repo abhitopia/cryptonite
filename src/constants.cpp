@@ -9,7 +9,7 @@ double sample_offset = 10.0;
 double dMin = std::numeric_limits<double>::min();
 double dMax = std::numeric_limits<double>::max();
 double dNaN = std::numeric_limits<double>::quiet_NaN();
-
+bool MULTITHREADED = true;
 
 std::vector<std::string> ADJECTIVES{
         "admiring",

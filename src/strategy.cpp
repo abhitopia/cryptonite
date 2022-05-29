@@ -13,7 +13,7 @@ std::shared_ptr<bool[]> Criteria::apply(const Dataset &dataset, bool contra) con
         trig_outputs.push_back(std::shared_ptr<bool[]>{nullptr});
     }
 
-#pragma omp parallel for default(none) shared(trig_outputs, dataset, contra, configs)
+#pragma omp parallel for default(none) shared(trig_outputs, dataset, contra, configs) if(MULTITHREADED)
     for(int i=0; i<configs.size(); i++){
         IndicatorConfig config = configs[i];
         auto result = config.compute(dataset, contra);
@@ -34,7 +34,7 @@ std::vector<IndicatorConfig> Criteria::generate_configs(int num_indicators, doub
 std::shared_ptr<bool[]> EntryCriteria::reduce(int num_bars, const std::vector<std::shared_ptr<bool[]>> &trig_outputs) const {
     std::shared_ptr<bool[]> result{new bool [num_bars]};
 
-#pragma omp parallel for default(none) shared(result, num_bars, trig_outputs)
+#pragma omp parallel for default(none) shared(result, num_bars, trig_outputs) if(MULTITHREADED)
     for (int bar=0; bar < num_bars; bar++){
         result[bar] = true;
         for(int i=0; i<trig_outputs.size(); i++){
@@ -67,7 +67,7 @@ json Criteria::toJson() const {
 std::shared_ptr<bool[]> ExitCriteria::reduce(int num_bars, const std::vector<std::shared_ptr<bool[]>> &trig_outputs) const {
     std::shared_ptr<bool[]> result{new bool [num_bars]};
 
-    #pragma omp parallel for default(none) shared(result, num_bars, trig_outputs)
+    #pragma omp parallel for default(none) shared(result, num_bars, trig_outputs) if(MULTITHREADED)
     for (int bar=0; bar < num_bars; bar++){
         result[bar] = false;
         for(int i=0; i<trig_outputs.size(); i++){

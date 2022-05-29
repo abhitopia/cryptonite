@@ -17,7 +17,7 @@ extern double dMax;
 extern double dNaN;
 extern std::vector<std::string> ADJECTIVES;
 extern std::vector<std::string> SURNAMES;
-
+extern bool MULTITHREADED;
 
 
 constexpr unsigned int switchHash(const char* str, int h = 0)

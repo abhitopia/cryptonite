@@ -33,7 +33,7 @@ Signal computeSignal(const Strategy &strategy, const Dataset &dataset) {
 
 
 
-    #pragma omp parallel sections default(none) shared(signal, dataset, strategy)
+    #pragma omp parallel sections default(none) shared(signal, dataset, strategy) if(MULTITHREADED)
     {
         #pragma omp section
         {
