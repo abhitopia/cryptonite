@@ -165,7 +165,7 @@ inline void GeneticAlgorithm<DNA>::createInitialPopulation()
     _population.resize(_populationSize);
     _nextGeneration.resize(_populationSize);
 
-    #pragma omp parallel for default(none) shared(_population, _initialDNA, _nextGeneration)
+    #pragma omp parallel for default(none) shared(_population, _initialDNA, _nextGeneration) if(MULTITHREADED)
     for (size_t iDNA = 0; iDNA < _populationSize; iDNA++)
     {
         _population[iDNA] = std::make_unique<DNA>(_initialDNA);
@@ -190,7 +190,7 @@ void GeneticAlgorithm<DNA>::updateBestDNA() {
     #pragma omp declare reduction(maximo : struct PopulationArgMax : omp_out = omp_in.max > omp_out.max ? omp_in : omp_out)
     PopulationArgMax argMax;
 
-    #pragma omp parallel for default(none) reduction(maximo:argMax) shared(_population, _populationSize)
+    #pragma omp parallel for default(none) reduction(maximo:argMax) shared(_population, _populationSize) if(MULTITHREADED)
     for(size_t iDNA = 0; iDNA < _populationSize; iDNA++){
         if (_population[iDNA]->getFitness() > argMax.max){
             argMax.max = _population[iDNA]->getFitness();
@@ -220,7 +220,7 @@ void GeneticAlgorithm<DNA>::evolveNextGeneration()
     // You can experiment with a variable number of children or let the
     // population size increase or decrease over time.
 
-    #pragma omp parallel for default(none) shared(_selectionPool, _population, _nextGeneration, _halfPopulationSize)
+    #pragma omp parallel for default(none) shared(_selectionPool, _population, _nextGeneration, _halfPopulationSize) if(MULTITHREADED)
     for (size_t iDNA = 0; iDNA < _halfPopulationSize; iDNA++)
     {
 
