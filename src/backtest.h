@@ -121,7 +121,7 @@ struct Metrics {
     double avgLoss{0.0};
     double loseRate{0.0};
     double profitFactor{0};
-    double profitFactorBetter{0};  // This accounts for the winRate so a single huge winning rate cannot bias the results
+//    double profitFactorBetter{0};  // This accounts for the winRate so a single huge winning rate cannot bias the results
     double maxDrawDown{0};
     double avgDrawDown{0};
     int numTrades{0};
@@ -138,7 +138,7 @@ struct Metrics {
         json j;
         j["numTrades"] = numTrades;
         j["profitFactor"] = profitFactor;
-        j["profitFactorBetter"] = profitFactorBetter;
+//        j["profitFactorBetter"] = profitFactorBetter;
         j["winRate"] = winRate;
         j["loseRate"] = loseRate;
         j["avgWinReturn"] = avgWin;
@@ -233,7 +233,7 @@ struct Backtest {
         metrics.avgLoss = sumLosses / numLoses;
 
         metrics.profitFactor = sumProfits / sumLosses;
-        metrics.profitFactorBetter = (metrics.winRate * metrics.avgWin) / (metrics.loseRate * metrics.avgLoss);
+//        metrics.profitFactorBetter = (metrics.winRate * metrics.avgWin) / (metrics.loseRate * metrics.avgLoss);
         std::string msg =   "" + std::to_string(totalReturn) + " != " + std::to_string(metrics.totalReturn);
         double divergence = totalReturn - metrics.totalReturn;
         if(divergence > 0.00001 or divergence < -0.00001){
