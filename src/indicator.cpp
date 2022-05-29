@@ -29,7 +29,11 @@ std::unordered_map<std::string, double> Indicator::get_random_params(double expl
         } else if(key == "level"){
 //            assert(not std::isnan(min_level));
             params["level"] = cryptonite::rand(min_level, max_level);
-        } else {
+        } else if( key.find("shift") != std::string::npos) {
+            params[key] = sample_gaussian_int(val, sample_std, 0, val + sample_offset);
+        } else if(key.find("pct") != std::string::npos){
+            params[key] = sample_gaussian_int(val, sample_std, 1, val + sample_offset);
+        } else { // period
             params[key] = sample_gaussian_int(val, sample_std,2, val + sample_offset);
         }
     }
