@@ -39,6 +39,8 @@ using std::setw;
 using std::fixed;
 using std::setprecision;
 
+#include "constants.h"
+
 
 // The objective of an optimization algorithm is to minimize or maximize
 // the output value of an objective function. The algorithm has to
@@ -57,7 +59,7 @@ class GeneticAlgorithm
 {
 public:
     GeneticAlgorithm(
-            const DNA& initialDNA,
+            DNA& initialDNA,
             size_t populationSize=1000,
             double fractionOfBestCanReproduce=0.2,
             double recombinationProbability=0.9,
@@ -69,6 +71,7 @@ public:
     size_t getNumEvolvedGenerations() const;
     size_t getNumGenerationImprovements() const;
     double getBestDNAfitness() const;
+    string getBestDNAMetric() const;
     void optimize(unsigned int maxGenNoImprove = 10, bool verbose = false);
 
 
@@ -78,7 +81,7 @@ private:
 
 private:
     void updateBestDNA();
-    const DNA& _initialDNA;
+    DNA& _initialDNA;
     size_t _populationSize;
     size_t _halfPopulationSize;
     double _fractionOfBestCanReproduce;
@@ -99,7 +102,7 @@ private:
 
 template<typename DNA>
 GeneticAlgorithm<DNA>::GeneticAlgorithm(
-        const DNA& initialDNA,
+        DNA& initialDNA,
         size_t populationSize,
         double fractionOfBestCanReproduce,
         double recombinationProbability,
@@ -107,6 +110,7 @@ GeneticAlgorithm<DNA>::GeneticAlgorithm(
         ): _initialDNA{initialDNA}
 {
 
+    _initialDNA.calcFitness();
     // Ensure a minimum and even population size
     _populationSize = std::max<size_t>(4, populationSize);
 
@@ -363,7 +367,7 @@ void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose)
 
     cout << "Before Optimization: "
          << left << setw(10) << fixed
-         << setprecision(4)  << getBestDNAfitness() << "\n";
+         << setprecision(4)  << _initialDNA.getMetric() << "\n";
 
     auto printGeneration = [&]()
     {
@@ -372,11 +376,11 @@ void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose)
                  << left << setw(5) << getNumEvolvedGenerations()
                  << "Gen Improvements: "
                  << left << setw(5) << getNumGenerationImprovements()
-                 << "Last Gen Improved: "
-                 << left << setw(5) << _genLastImproved
+//                 << "Last Gen Improved: "
+//                 << left << setw(5) << _genLastImproved
                  << "   Best Fitness: "
                  << left << setw(10) << fixed
-                 << setprecision(4)  << getBestDNAfitness() << "\n";
+                 << setprecision(4)  << getBestDNAMetric() << "\n";
         }
 
     };
@@ -389,6 +393,10 @@ void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose)
     }
 }
 
+template<typename DNA>
+string GeneticAlgorithm<DNA>::getBestDNAMetric() const {
+    return _bestDNA.getMetric();
+}
 
 
 #endif //CRYPTONITE_GENETIC_ALGORITHM_HPP

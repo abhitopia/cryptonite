@@ -134,7 +134,7 @@ DNA::DNA(map<string, Gene> genes) {
 }
 
 DNA::DNA(const DNA &copyFrom) {
-    copyGenes(copyFrom);
+    this->copyGenes(copyFrom);
 }
 
 double DNA::getFitness() const {
@@ -187,4 +187,82 @@ void DNA::mutateGenes(double probability) {
     for (auto& it: _genes){
         it.second.mutate(probability);
     }
+}
+
+string DNA::getMetric() const {
+    return std::to_string(_fitness);
+}
+
+void StrategyDNA::initGenesFromStrategyJson() {
+    json j = _strategyJson.flatten();
+//        std::cout << j.dump(4) << std::endl;
+    for(auto& [path, value]: j.items()) {
+        if (path.find("/params/") != std::string::npos){
+            if(path.find("/apply_to") != std::string::npos || path.find("/ma_method") != std::string::npos){
+                continue;
+            }
+            if(path.find("/level") != std::string::npos){
+                double curValue = value.get<double>();
+                double valMin = curValue - std::max(std::abs(curValue/5.0), 5.0);
+                double valMax = curValue + std::max(std::abs(curValue/5.0), 5.0);
+                double delta = (valMax - valMin)/100.0;
+                _genes[path] = Gene(value.get<double>(), valMin, valMax, delta);
+            } else if(path.find("pct") != std::string::npos){
+                _genes[path] = Gene(value.get<double>(), std::max(1.0, value.get<double>()-10) , std::min(100.0, value.get<double>()+10));
+            } else if(path.find("period") != std::string::npos){
+                _genes[path] = Gene(value.get<double>(), std::max(2.0, value.get<double>()-10), value.get<double>()+10);
+            } else if(path.find("shift") != std::string::npos){
+                _genes[path] = Gene(value.get<double>(), std::max(0.0, value.get<double>()-5), value.get<double>()+5);
+            }
+//                std::cout << path << " " << value << std::endl;
+        } else if(path == "/positionCloseConfig/stopLoss" && !value.is_null() && value.get<double>() > 0){
+//                    std::cout << path << " " << value << std::endl;
+            _genes[path] = Gene(value.get<double>(), .01, 0.3, 0.005);
+        } else if(path == "/positionCloseConfig/takeProfit" && !value.is_null() && value.get<double>() > 0){
+//                    std::cout << path << " " << value << std::endl;
+            _genes[path] = Gene(value.get<double>(), .01, 0.3, 0.005);
+        }
+    }
+}
+
+json StrategyDNA::getStrategyJsonFromGenes() {
+    json j = _strategyJson.flatten();
+    for(const auto& [key, gene]: _genes){
+        j[key] = gene.getValue();
+    }
+    return j.unflatten();
+}
+
+StrategyDNA::StrategyDNA(std::shared_ptr<Backtester> backtester, json strategy) {
+    _backtester = backtester;
+    _strategyJson = strategy;
+    initGenesFromStrategyJson();
+    _numBits = 0;
+    for (auto& it: _genes){
+        _numBits += it.second.getNumBits();
+    }
+}
+
+void StrategyDNA::calcFitness() {
+    auto strategy = Strategy::fromJson(getStrategyJsonFromGenes());
+    _backtest = std::make_shared<Backtest>(_backtester->evaluate(strategy));
+    _fitness = _backtest->metrics.metric();
+}
+
+StrategyDNA::StrategyDNA(const StrategyDNA &copyFrom) {
+    copyGenes(copyFrom);
+}
+
+void StrategyDNA::copyGenes(const StrategyDNA &copyFrom) {
+    DNA::copyGenes(copyFrom);
+    _backtester = copyFrom._backtester;
+    _strategyJson = copyFrom._strategyJson;
+}
+
+string StrategyDNA::getMetric() const {
+    string result = std::to_string(_fitness) + " ";
+    json metrics = _backtest->metrics.toJson();
+    result += "\tNum Trades: " + std::to_string(metrics["numTrades"].get<int>());
+    result += "\tCAGROverAvgDrawDown: " + std::to_string(metrics["CAGROverAvgDrawDown"].get<double>());
+    return result;
 }
