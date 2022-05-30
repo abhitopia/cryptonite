@@ -28,11 +28,8 @@ public:
 
     Dataset(const DataSetContainer& container);
     int durationSeconds() const;
-
     double durationDays() const;
-
     int intervalSeconds() const;
-
     int barsWithVolume();
 };
 
@@ -47,11 +44,10 @@ struct DataSetContainer {
 
     DataSetContainer(){};
     DataSetContainer(const DataSetConfig& info) : info{info} {};
-    void add(long timestamp, double open, double high, double low, double close, double volume);
+    void set(size_t index, long timestamp, double open, double high, double low, double close, double volume);
     int numBars() const;
-    void reserve(int n);
+    void resize(int n);
     Dataset dataset();
-
 };
 
 #endif //CRYPTONITE_DATASET_H

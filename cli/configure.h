@@ -278,6 +278,10 @@ private:
                 ->transform(intervalValidator)
                 ->default_val(config.dataSetConfig.intervalInString());
 
+        subcommand->add_option("--num-bars,-n,", "Number of most recent bars to load.")
+                ->default_val(config.dataSetConfig.numBars)
+                ->check(CLI::TypeValidator<unsigned int>());
+
         subcommand->add_option("--max-entry-rules,--mnr",
                                 "Maximum number of entry rules used in generated strategies")
                 ->check(CLI::Range(1, 6))

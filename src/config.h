@@ -115,11 +115,14 @@ struct DataSetConfig {
     std::string baseAsset;
     std::string quoteAsset;
     Interval interval;
+    unsigned int numBars;
 
-    DataSetConfig(std::string baseAsset = "BTC", std::string quoteAsset = "USDT", Interval interval = Interval::MINUTE1){
+    DataSetConfig(std::string baseAsset = "BTC", std::string quoteAsset = "USDT",
+                  Interval interval = Interval::MINUTE1, unsigned int numBars = std::numeric_limits<unsigned int>::max()){
         this->baseAsset = baseAsset;
         this->quoteAsset = quoteAsset;
         this->interval = interval;
+        this->numBars = numBars;
     }
 
     std::string symbol();

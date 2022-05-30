@@ -236,13 +236,15 @@ json DataSetConfig::toJson() const {
     j["baseAsset"] = baseAsset;
     j["quoteAsset"] = quoteAsset;
     j["interval"] = intervalInString();
+    j["numBars"] = numBars;
     return j;
 }
 
 DataSetConfig DataSetConfig::fromJson(json j) {
     return DataSetConfig(j["baseAsset"].get<std::string>(),
                         j["quoteAsset"].get<std::string>(),
-                         stringToInterval(j["interval"].get<std::string>()));
+                         stringToInterval(j["interval"].get<std::string>()),
+                         j["numBars"].get<unsigned int>());
 }
 
 json AcceptanceConfig::toJson() const {

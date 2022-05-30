@@ -11,6 +11,7 @@
 struct Data: CryptoniteCommand {
     void setup(CLI::App& cli_app) override {
         app = &cli_app;
+        DataSetConfig dataSetConfig{};
         auto intervalValidator = CLI::IsMember({intervalToString(Interval::MINUTE1),
                                                 intervalToString(Interval::MINUTE3),
                                                 intervalToString(Interval::MINUTE5),
@@ -36,13 +37,18 @@ struct Data: CryptoniteCommand {
         command->add_option("--interval,-i,interval", "OHLC Interval")
                 ->required(true)
                 ->transform(intervalValidator);
+        command->add_option("--num-bars,-n,num-bars", "Number of most recent bars to load.")
+                ->default_val(dataSetConfig.numBars)
+                ->check(CLI::TypeValidator<unsigned int>());
     }
 
     void parse() override {
         if(command->count() > 0){
             auto info = DataSetConfig(command->get_option("--base-asset")->as<std::string>(),
                                       command->get_option("--quote-asset")->as<std::string>(),
-                                      stringToInterval(command->get_option("--interval")->as<std::string>()));
+                                      stringToInterval(command->get_option("--interval")->as<std::string>()),
+                                      command->get_option("--num-bars")->as<unsigned int>()
+                                      );
 
             if (!info.check_valid()){
                 std::cout << "Symbol: " << info.symbol() << " with Base asset: " << info.baseAsset << " and Quote Asset: "
