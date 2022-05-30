@@ -223,12 +223,27 @@ void StrategyDNA::initGenesFromStrategyJson() {
             _genes[path] = Gene(value.get<double>(), .01, 0.3, 0.005);
         }
     }
+
+    // exception
+    std::string fast_period_str = "/fast_period";
+    for(const auto& [key, gene]: _genes){
+        if(key.find(fast_period_str) != std::string::npos){
+            auto slow_period_key = key.substr(0, key.length()-fast_period_str.length()) + "/slow_period";
+            double fast_val = j[key].get<double>();
+            double slow_val = j[slow_period_key].get<double>();
+            double mid = std::round((fast_val + slow_val)/2.0);
+            _genes[key] = Gene(fast_val, std::max(2.0, fast_val-10), mid);
+            _genes[slow_period_key] = Gene(slow_val, mid, slow_val + 10);
+
+        }
+    }
 }
 
 json StrategyDNA::getStrategyJsonFromGenes() {
     json j = _strategyJson.flatten();
     for(const auto& [key, gene]: _genes){
         j[key] = gene.getValue();
+//        std::cout << key << " " << gene.getValue() << std::endl;
     }
     return j.unflatten();
 }
