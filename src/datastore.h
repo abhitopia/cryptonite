@@ -87,48 +87,19 @@ class DataSetManager {
     }
 
     void updateDataset(){
-        double open, high, low, close, volume;
-        long timestamp;
+        dataSetContainer.resize(dataJson.size());
 
-        if(dataJson.size() - dataSetContainer.numBars() > 50000){
-            dataSetContainer.reserve(dataJson.size());
+#pragma omp parallel for default(none) if(MULTITHREADED)
+        for(int i=0; i<dataJson.size(); i++){
+            auto row = dataJson[i];
+            long timestamp = row[0].get<long>()/1000;
+            double open = atof(row[1].get<std::string>().c_str());
+            double high = atof(row[2].get<std::string>().c_str());
+            double low = atof(row[3].get<std::string>().c_str());
+            double close = atof(row[4].get<std::string>().c_str());
+            double volume = atof(row[5].get<std::string>().c_str());
+            dataSetContainer.set(i, timestamp, open, high, low, close, volume);
         }
-
-        const int maxProgress = dataJson.size();
-        using namespace indicators;
-        show_console_cursor(false);
-        indicators::ProgressBar bar{
-                option::BarWidth{100},
-                option::Start{"\rLoading data     ["},
-                option::Fill{"█"},
-                option::Lead{"█"},
-                option::Remainder{"-"},
-                option::End{"]"},
-                option::MaxProgress {maxProgress},
-                option::ForegroundColor{Color::white},
-                option::FontStyles{std::vector<FontStyle>{FontStyle::bold}},
-        };
-
-        for(auto& row: dataJson){
-            bar.tick();
-            timestamp = row[0].get<long>()/1000;
-            if(dataSetContainer.timestamp->size() > 0){
-                long lastTimeStep = dataSetContainer.timestamp->back();
-                if(timestamp < lastTimeStep){
-                    continue;
-                }
-            }
-            open = atof(row[1].get<std::string>().c_str());
-            high = atof(row[2].get<std::string>().c_str());
-            low = atof(row[3].get<std::string>().c_str());
-            close = atof(row[4].get<std::string>().c_str());
-            volume = atof(row[5].get<std::string>().c_str());
-            dataSetContainer.add(timestamp, open, high, low, close, volume);
-        }
-
-        // Show cursor
-        indicators::show_console_cursor(true);
-        std::cout << std::endl;
     }
 
     fs::path path(){
