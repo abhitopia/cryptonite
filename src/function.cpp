@@ -62,6 +62,10 @@ namespace CIndicator{
 
         int ret = info->indicator(min_input_len, c_inputs, c_params, c_outputs);
         if (ret != 0) {
+            std::cout << "Name: " << info->full_name << std::endl;
+            for(int i=0; i< num_params; i++){
+                std::cout<< info->option_names[i] << ": " << c_params[i] <<std::endl;
+            }
             throw std::invalid_argument("The params dont allow computation");
         }
         return outputs;
