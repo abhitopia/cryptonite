@@ -292,6 +292,7 @@ private:
         defaultConfig["dataSetConfig"]["baseAsset"] = config["base-asset"].get<std::string>();
         defaultConfig["dataSetConfig"]["quoteAsset"] = config["quote-asset"].get<std::string>();
         defaultConfig["dataSetConfig"]["interval"] = config["interval"].get<std::string>();
+        defaultConfig["dataSetConfig"]["numBars"] = atoi(config["num-bars"].get<std::string>().c_str());
 
         // depositConfig
         defaultConfig["depositConfig"]["quoteDeposit"] = atof(config["quote-deposit"].get<std::string>().c_str());
@@ -328,7 +329,7 @@ private:
         double start_time = omp_get_wtime();
         auto topN = TopNContainer<GeneratedStrategy>{10};
         unsigned long numEvaluated = 0;
-        #pragma omp parallel for default(none) shared(numEvaluated, start_time, topN, backtester, strategyGenConfig)
+        #pragma omp parallel for default(none) shared(numEvaluated, start_time, topN, backtester, strategyGenConfig) if(MULTITHREADED)
         for(unsigned long i=0; i<ULONG_MAX; i++){
             Strategy strategy = Strategy::generate(strategyGenConfig);
             Backtest backtest = backtester.evaluate(strategy);
