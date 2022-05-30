@@ -116,7 +116,11 @@ struct Generate: CryptoniteCommand {
                     }
                     return;
                 } else if(command->got_subcommand("optimize")){
-                    optimize(generatedStrategies);
+                    int popSize = subcommand->get_option("--pop-size")->as<int>();
+                    double fractionReproduce = subcommand->get_option("--frac-reproduce")->as<double>();
+                    double crossProb = subcommand->get_option("--cross-prob")->as<double>();
+                    bool verbose = subcommand->get_option("--verbose")->as<bool>();
+                    optimize(generatedStrategies, popSize, fractionReproduce, crossProb, verbose);
                 }
 
                 return;
@@ -155,12 +159,27 @@ struct Generate: CryptoniteCommand {
         addSubcommandOptions(listCommand);
         addSubcommandOptions(deleteCommand);
         addSubcommandOptions(optimizeCommand);
+
+        optimizeCommand->add_flag("--verbose,-v", "Print during optimization");
+        optimizeCommand->add_option("--pop-size,-p", "Size of the population.")
+                        ->default_val(500)
+                        ->check(CLI::Range(100, 2000))
+                        ->check(CLI::PositiveNumber);
+        optimizeCommand->add_option("--frac-reproduce,-f", "Fraction of elite population that can reproduce.")
+                ->default_val(0.4)
+                ->check(CLI::Range(0.1, 1.0))
+                ->check(CLI::TypeValidator<double>());
+        optimizeCommand->add_option("--cross-prob,-c", "Recombination probability.")
+                ->default_val(0.9)
+                ->check(CLI::Range(0.1, 1.0))
+                ->check(CLI::TypeValidator<double>());
+
         command->fallthrough(true);
     }
 
 
 private:
-    void optimize(std::vector<GeneratedStrategy> strategies){
+    void optimize(std::vector<GeneratedStrategy> strategies, size_t populationSize, double fractionReproduce, double recombinationProb, bool verbose=false){
 
         AcceptanceConfig acceptanceConfig{};
 
@@ -174,8 +193,8 @@ private:
             auto backtester = std::make_shared<Backtester>(acceptanceConfig,
                                   datastore.getDataset(dataSetConfig));
             StrategyDNA strategyDna{backtester, generatedStrategy.strategy};
-            GeneticAlgorithm<StrategyDNA> ga{strategyDna, 500, 0.4, 0.9 , -1.0};
-            ga.optimize(5, false);
+            GeneticAlgorithm<StrategyDNA> ga{strategyDna, populationSize, fractionReproduce, recombinationProb , -1.0};
+            ga.optimize(5, verbose);
             Backtest backtest = ga.getBestDNA().getBacktest();
             auto optimizedStrategy = saveGeneratedStrategy(backtest);
             showTopN(std::vector<GeneratedStrategy>{optimizedStrategy}, "Optimized Strategy!");
