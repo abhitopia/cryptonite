@@ -239,7 +239,7 @@ void StrategyDNA::initGenesFromStrategyJson() {
     }
 }
 
-json StrategyDNA::getStrategyJsonFromGenes() {
+json StrategyDNA::getStrategyJsonFromGenes() const {
     json j = _strategyJson.flatten();
     for(const auto& [key, gene]: _genes){
         j[key] = gene.getValue();
@@ -280,4 +280,9 @@ string StrategyDNA::getMetric() const {
     result += "\tNum Trades: " + std::to_string(metrics["numTrades"].get<int>());
     result += "\tCAGROverAvgDrawDown: " + std::to_string(metrics["CAGROverAvgDrawDown"].get<double>());
     return result;
+}
+
+Backtest StrategyDNA::getBacktest() const {
+    auto strategy = Strategy::fromJson(getStrategyJsonFromGenes());
+    return _backtester->evaluate(strategy);
 }

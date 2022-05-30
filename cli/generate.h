@@ -26,6 +26,7 @@ struct GeneratedStrategy {
     std::string createdAt{};
     GeneratedStrategy(){};
 
+
     static GeneratedStrategy fromBacktest(std::string name, const Backtest &backtest) {
         auto backtestJson = backtest.toJson();
         backtestJson["createdAt"] = date::format("%F %T", std::chrono::system_clock::now());
@@ -158,20 +159,26 @@ struct Generate: CryptoniteCommand {
     }
 
 
-
 private:
     void optimize(std::vector<GeneratedStrategy> strategies){
 
+        AcceptanceConfig acceptanceConfig{};
 
+        int i = 0;
         for(auto generatedStrategy: strategies){
+            i += 1;
+            std::string appendix = std::to_string(i) + "/" + std::to_string(strategies.size());
+            showTopN(std::vector<GeneratedStrategy>{generatedStrategy}, "Optimizing Strategy : " + appendix);
             DataSetConfig dataSetConfig = DataSetConfig::fromJson(generatedStrategy.dataset);
-            std::cout << dataSetConfig.toJson().dump(4) << std::endl;
-            AcceptanceConfig acceptanceConfig{};
-
-            auto strategy = std::make_shared<Strategy>(Strategy::fromJson(generatedStrategy.strategy));
+            // TODO(abhi) this calls Indicator::setup every single time. It might be more efficient to cache those value in datastore manager
             auto backtester = std::make_shared<Backtester>(acceptanceConfig,
                                   datastore.getDataset(dataSetConfig));
-            StrategyDNA strategyDna{backtester, strategy};
+            StrategyDNA strategyDna{backtester, generatedStrategy.strategy};
+            GeneticAlgorithm<StrategyDNA> ga{strategyDna, 500, 0.4, 0.9 , -1.0};
+            ga.optimize(5, false);
+            Backtest backtest = ga.getBestDNA().getBacktest();
+            auto optimizedStrategy = saveGeneratedStrategy(backtest);
+            showTopN(std::vector<GeneratedStrategy>{optimizedStrategy}, "Optimized Strategy!");
         }
     }
 

@@ -95,10 +95,8 @@ class StrategyDNA: public DNA {
     std::shared_ptr<Backtester> _backtester{nullptr};
     std::shared_ptr<Backtest> _backtest{nullptr};
     json _strategyJson{};
-
     void initGenesFromStrategyJson();
-    json getStrategyJsonFromGenes();
-
+    json getStrategyJsonFromGenes() const;
 public:
     StrategyDNA(map<string, Gene> genes = {}): DNA(genes){};
     StrategyDNA(std::shared_ptr<Backtester> backtester, json strategy);
@@ -106,7 +104,7 @@ public:
     void calcFitness() override;
     void copyGenes(const StrategyDNA& copyFrom);
     string getMetric() const;
-
+    Backtest getBacktest() const;
 };
 
 #endif //CRYPTONITE_DNA_H

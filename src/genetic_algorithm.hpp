@@ -70,8 +70,8 @@ public:
     size_t getPopulationSize() const;
     size_t getNumEvolvedGenerations() const;
     size_t getNumGenerationImprovements() const;
-    double getBestDNAfitness() const;
     string getBestDNAMetric() const;
+    DNA getBestDNA() const;
     void optimize(unsigned int maxGenNoImprove = 10, bool verbose = false);
 
 
@@ -152,14 +152,6 @@ size_t GeneticAlgorithm<DNA>::getNumGenerationImprovements() const
 {
     return _numGenerationImprovements;
 }
-
-
-template<typename DNA>
-double GeneticAlgorithm<DNA>::getBestDNAfitness() const
-{
-    return _bestDNA.getFitness();
-}
-
 
 
 template<typename DNA>
@@ -363,11 +355,12 @@ void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose)
         cout << "Fraction of best that reproduces: " << _fractionOfBestCanReproduce << "\n";
         cout << "Recombination Probability: " << _recombinationProbability << "\n";
         cout << "Mutation Probability: " << _mutationProbability << "\n";
+        cout << "Before Optimization: "
+             << left << setw(10) << fixed
+             << setprecision(4)  << _initialDNA.getMetric() << "\n";
+
     }
 
-    cout << "Before Optimization: "
-         << left << setw(10) << fixed
-         << setprecision(4)  << _initialDNA.getMetric() << "\n";
 
     auto printGeneration = [&]()
     {
@@ -396,6 +389,11 @@ void GeneticAlgorithm<DNA>::optimize(unsigned int maxGenNoImprove, bool verbose)
 template<typename DNA>
 string GeneticAlgorithm<DNA>::getBestDNAMetric() const {
     return _bestDNA.getMetric();
+}
+
+template<typename DNA>
+DNA GeneticAlgorithm<DNA>::getBestDNA() const {
+    return _bestDNA;
 }
 
 
