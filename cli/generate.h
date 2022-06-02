@@ -20,17 +20,17 @@
 
 struct GeneratedStrategy {
     std::string name{};
+    int version{};
     json metrics{};
     json strategy{};
     json dataset{};
     std::string createdAt{};
     GeneratedStrategy(){};
 
-
-    static GeneratedStrategy fromBacktest(std::string name, const Backtest &backtest) {
+    static GeneratedStrategy fromBacktest(std::string name, int version, const Backtest &backtest) {
         auto backtestJson = backtest.toJson();
         backtestJson["createdAt"] = date::format("%F %T", std::chrono::system_clock::now());
-        return fromJson(name, backtestJson);
+        return fromJson(name, version, backtestJson);
     }
 
     json toJson() const {
@@ -42,9 +42,10 @@ struct GeneratedStrategy {
         return j;
     }
 
-    static GeneratedStrategy fromJson(std::string name, json j){
+    static GeneratedStrategy fromJson(std::string name, int version, json j){
         auto generatedStrategy = GeneratedStrategy{};
         generatedStrategy.name = name;
+        generatedStrategy.version = version;
         generatedStrategy.metrics = j["metrics"];
         generatedStrategy.strategy = j["strategy"];
         generatedStrategy.dataset = j["dataset"];
@@ -97,9 +98,9 @@ struct Generate: CryptoniteCommand {
                 filter["quoteAsset"] = subcommand->get_option("--quoteAsset")->as<std::string>();
                 filter["baseAsset"] = subcommand->get_option("--baseAsset")->as<std::string>();
                 filter["interval"] = subcommand->get_option("--interval")->as<std::string>();
+                filter["version"] = subcommand->get_option("--version")->as<int>();
 
                 auto generatedStrategies = loadGeneratedStrategies(filter);
-
                 if(generatedStrategies.size() == 0){
                     std::cout << "No generated strategies match the criteria!!" << std::endl;
                     return;
@@ -116,6 +117,9 @@ struct Generate: CryptoniteCommand {
                     }
                     return;
                 } else if(command->got_subcommand("optimize")){
+
+                    showTopN(generatedStrategies, "Following strategies will be optimized");
+
                     int popSize = subcommand->get_option("--pop-size")->as<int>();
                     double fractionReproduce = subcommand->get_option("--frac-reproduce")->as<double>();
                     double crossProb = subcommand->get_option("--cross-prob")->as<double>();
@@ -156,11 +160,11 @@ struct Generate: CryptoniteCommand {
         auto deleteCommand = command->add_subcommand("delete", "Delete generated strategies.");
         auto optimizeCommand = command->add_subcommand("optimize", "Optimize generated strategies.");
 
-        addSubcommandOptions(listCommand);
-        addSubcommandOptions(deleteCommand);
-        addSubcommandOptions(optimizeCommand);
+        addSubcommandOptions(listCommand, -1);
+        addSubcommandOptions(deleteCommand, -1);
+        addSubcommandOptions(optimizeCommand, 0);
 
-        optimizeCommand->add_flag("--verbose,-v", "Print during optimization");
+        optimizeCommand->add_flag("--verbose,-V", "Print during optimization");
         optimizeCommand->add_option("--pop-size,-p", "Size of the population.")
                         ->default_val(500)
                         ->check(CLI::Range(100, 2000))
@@ -196,16 +200,21 @@ private:
             GeneticAlgorithm<StrategyDNA> ga{strategyDna, populationSize, fractionReproduce, recombinationProb , -1.0};
             ga.optimize(5, verbose);
             Backtest backtest = ga.getBestDNA().getBacktest();
-            auto optimizedStrategy = saveGeneratedStrategy(backtest);
+            auto optimizedStrategy = saveGeneratedStrategy(backtest, generatedStrategy.name, generatedStrategy.version + 1);
             showTopN(std::vector<GeneratedStrategy>{optimizedStrategy}, "Optimized Strategy!");
         }
     }
 
-    void addSubcommandOptions(CLI::App* subcommand){
+    void addSubcommandOptions(CLI::App* subcommand, int versionDefault){
         subcommand->add_option("--name,-n", "Filter by generated strategy name");
         subcommand->add_option("--baseAsset,-b,baseAsset", "Filter by base asset")->excludes("--name");
         subcommand->add_option("--quoteAsset,-q,quoteAsset", "Filter by quote asset")->excludes("--name");
         subcommand->add_option("--interval,-i,interval", "Filter by interval")->excludes("--name");
+        subcommand->add_option("--version,-v", "Filter by version. `0` for unoptimized strategies.")
+                    ->default_val(versionDefault)
+                    ->check(CLI::TypeValidator<int>());
+
+
     }
 
     void deleteGenerateStrategies(std::vector<GeneratedStrategy> strategies){
@@ -229,9 +238,16 @@ private:
         auto quoteAsset = filter["quoteAsset"].get<std::string>();
         auto baseAsset = filter["baseAsset"].get<std::string>();
         auto interval = filter["interval"].get<std::string>();
+        auto version = filter["version"].get<int>();
 
-        for(auto& [name, strategy]: jsonDB["generated"].items()){
+        for(auto& [name, value]: jsonDB["generated"].items()){
+            int defaultVersion = value["defaultVersion"].get<int>();
 
+            if(version >= 0 and defaultVersion != version){
+                continue;
+            }
+
+            json strategy = value["versions"][defaultVersion];
             if(strategyName.length() > 0 and strategyName != name){
                 continue;
             }
@@ -246,7 +262,7 @@ private:
                 continue;
             }
 
-            generatedStrategies.push_back(GeneratedStrategy::fromJson(name, strategy));
+            generatedStrategies.push_back(GeneratedStrategy::fromJson(name, defaultVersion, strategy));
         }
 
         std::sort(generatedStrategies.begin(), generatedStrategies.end(), std::greater<GeneratedStrategy>());
@@ -360,7 +376,7 @@ private:
             Strategy strategy = Strategy::generate(strategyGenConfig);
             Backtest backtest = backtester.evaluate(strategy);
             if(backtest.metrics.metric() > 0){
-                topN.insert(saveGeneratedStrategy(backtest));
+                topN.insert(saveGeneratedStrategy(backtest, getNewName(), 0));
             }
             numEvaluated += 1;
             if (omp_get_thread_num() == 0 and omp_get_wtime() - start_time > 0.5){
@@ -372,14 +388,22 @@ private:
         std::cout << "\n" << time << std::endl;
     }
 
-    GeneratedStrategy saveGeneratedStrategy(const Backtest &backtest) {
+    std::string getNewName(){
         std::string name = get_random_name();
         while (jsonDB["generated"].contains(name)){
             name = get_random_name();
         }
+        return name;
+    }
 
-        GeneratedStrategy strategy = GeneratedStrategy::fromBacktest(name, backtest);
-        jsonDB["generated"][name] = strategy.toJson();
+    GeneratedStrategy saveGeneratedStrategy(const Backtest &backtest, std::string name, int version) {
+        GeneratedStrategy strategy = GeneratedStrategy::fromBacktest(name, version, backtest);
+        if(!jsonDB["generated"].contains(name)){
+            jsonDB["generated"][name] = json::object({});
+            jsonDB["generated"][name]["versions"] = json::array();
+        }
+        jsonDB["generated"][name]["versions"].push_back(strategy.toJson());
+        jsonDB["generated"][name]["defaultVersion"] = jsonDB["generated"][name]["versions"].size() - 1;
         JsonFileHandler::write(app->get_option("--database")->as<std::string>(), jsonDB);
         return strategy;
     }
@@ -392,19 +416,19 @@ private:
         table.set_cell_text_align(fort::text_align::center);
         table.set_border_style(FT_BOLD_STYLE);
         table.row(0).set_cell_bg_color(fort::color::black);
-        table[0][0].set_cell_span(10);
+        table[0][0].set_cell_span(11);
         if(header.length() > 0){
             table <<  fort::header  << header << fort::endr;
         } else {
             table <<  fort::header  << "Generated Strategies" << fort::endr;
         }
 
-        table << fort::header << "Name"  << "CAGR/AvgDD" << "# Trades" << "Max DD (%)" << "Profit Factor" << "Win %" << "Return %" << "CAGR (%)" << "Dataset" << "Created At" << fort::endr << fort::separator;
+        table << fort::header << "Name"  << "Version" << "CAGR/AvgDD" << "# Trades" << "Max DD (%)" << "Profit Factor" << "Win %" << "Return %" << "CAGR (%)" << "Dataset" << "Created At" << fort::endr << fort::separator;
         for(auto& b: vect){
             json bJson = b.toJson();
             json metrics = bJson["metrics"];
             json dataset = bJson["dataset"];
-            table << b.name <<  metrics["CAGROverAvgDrawDown"].get<double>()
+            table << b.name <<  b.version << metrics["CAGROverAvgDrawDown"].get<double>()
                   << metrics["numTrades"].get<int>() << metrics["maxDrawDown"].get<double>()*100
                   << metrics["profitFactor"].get<double>() << metrics["winRate"].get<double>()*100
                   << metrics["totalReturn"].get<double>() *100 << metrics["CAGR"].get<double>() *100
