@@ -4,7 +4,9 @@
 #include "dataset.h"
 
 
-Dataset::Dataset(const DataSetContainer& container) {
+Dataset::Dataset(const DataSetContainer& container, double noise) {
+    assert(noise >= 0.0 and noise <= 0.05 and "noise level must be in [0.0, 0.05]");
+    this->noise = noise;
     dataSetConfig = container.info;
     this->numBars = std::min<int>(container.numBars(), dataSetConfig.numBars);
     int offset =  container.numBars() - this->numBars;
@@ -20,6 +22,8 @@ Dataset::Dataset(const DataSetContainer& container) {
     std::copy(container.low->begin() + offset, container.low->end(), this->low.get());
     std::copy(container.close->begin() + offset, container.close->end(), this->close.get());
     std::copy(container.volume->begin() + offset, container.volume->end(), this->volume.get());
+    applyNoise();  // First apply the noise!
+
     this->median = CIndicator::medprice(this->numBars, {this->high, this->low})[0];
     this->typical = CIndicator::typprice(this->numBars, {this->high, this->low, this->close})[0];
     this->weighted = CIndicator::wcprice(this->numBars, {this->high, this->low, this->close})[0];
@@ -48,6 +52,22 @@ int Dataset::durationSeconds() const {
     return timestamp[numBars - 1] - timestamp[0];
 }
 
+void Dataset::applyNoise() {
+    if(noise == 0.0){
+        return;
+    }
+
+#pragma omp parallel for default(none) if(MULTITHREADED)
+    for(int i=0; i<numBars; i++){
+        double noiseNow = cryptonite::rand(1.0 - noise, 1 + noise);
+        open[i] *= noiseNow;
+        close[i] *= noiseNow;
+        high[i] *= noiseNow;
+        low[i] *= noiseNow;
+        volume[i] *= noiseNow;
+    }
+}
+
 void DataSetContainer::set(size_t index, long timestamp, double open, double high, double low, double close, double volume) {
     this->timestamp->at(index) = timestamp;
     this->open->at(index) = open;
@@ -61,8 +81,8 @@ int DataSetContainer::numBars() const {
     return this->timestamp->size();
 }
 
-Dataset DataSetContainer::dataset() {
-    return Dataset(*this);
+Dataset DataSetContainer::dataset(double noise) {
+    return Dataset(*this, noise);
 }
 
 void DataSetContainer::resize(int n) {

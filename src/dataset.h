@@ -14,6 +14,7 @@ struct DataSetContainer;
 class Dataset {
 public:
     DataSetConfig dataSetConfig{};
+    double noise{0.0};
     int numBars{};
     std::shared_ptr<long[]> timestamp{nullptr};
     std::shared_ptr<double[]> open{nullptr};
@@ -26,11 +27,14 @@ public:
     std::shared_ptr<double[]> weighted{nullptr};
     std::shared_ptr<double[]> zero{nullptr};
 
-    Dataset(const DataSetContainer& container);
+    Dataset(const DataSetContainer& container, double noise=0.0);
     int durationSeconds() const;
     double durationDays() const;
     int intervalSeconds() const;
     int barsWithVolume();
+
+private:
+    void applyNoise();
 };
 
 struct DataSetContainer {
@@ -47,7 +51,7 @@ struct DataSetContainer {
     void set(size_t index, long timestamp, double open, double high, double low, double close, double volume);
     int numBars() const;
     void resize(int n);
-    Dataset dataset();
+    Dataset dataset(double noise=0.0);
 };
 
 #endif //CRYPTONITE_DATASET_H

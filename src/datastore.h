@@ -129,8 +129,8 @@ public:
             load();
     }
 
-    Dataset getDataset(){
-        return dataSetContainer.dataset();
+    Dataset getDataset(double noise=0.0){
+        return dataSetContainer.dataset(noise);
     }
 
     void update(){
@@ -170,9 +170,9 @@ public:
         datasetManagerMap[key].update();
     }
 
-    Dataset getDataset(const DataSetConfig& datasetConfig){
+    Dataset getDataset(const DataSetConfig& datasetConfig, double noise=0.0){
         auto key = addDataset(datasetConfig);
-        return datasetManagerMap[key].getDataset();
+        return datasetManagerMap[key].getDataset(noise);
     }
 };
 
