@@ -40,7 +40,7 @@ namespace cryptonite{
 
     double rand(const double &min, const double &max) {
         int gen_id = omp_get_thread_num() % _Random->max_threads;
-        return min + _Random->u_real_distribution(_Random->generators[gen_id]) * max;
+        return min + _Random->u_real_distribution(_Random->generators[gen_id]) * (max-min);
     }
 
     double randint(const int &min, const int &max) {
