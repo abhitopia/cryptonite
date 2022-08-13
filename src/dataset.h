@@ -15,7 +15,7 @@ class Dataset {
 public:
     DataSetConfig dataSetConfig{};
     double noise{0.0};
-    int numBars{};
+    unsigned int numBars{};
     std::shared_ptr<long[]> timestamp{nullptr};
     std::shared_ptr<double[]> open{nullptr};
     std::shared_ptr<double[]> high{nullptr};

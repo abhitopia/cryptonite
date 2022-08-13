@@ -8,7 +8,7 @@ Dataset::Dataset(const DataSetContainer& container, double noise) {
     assert(noise >= 0.0 and noise <= 0.05 and "noise level must be in [0.0, 0.05]");
     this->noise = noise;
     dataSetConfig = container.info;
-    this->numBars = std::min<int>(container.numBars(), dataSetConfig.numBars);
+    this->numBars = std::min<unsigned int>(container.numBars(), dataSetConfig.numBars);
     int offset =  container.numBars() - this->numBars;
     this->timestamp.reset(new long[this->numBars]);
     this->open.reset(new double[this->numBars]);
