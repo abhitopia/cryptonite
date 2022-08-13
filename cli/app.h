@@ -8,7 +8,7 @@
 #include "../include/CLI11.hpp"
 #include "configure.h"
 #include "data.h"
-#include "generate.h"
+#include "strategy_command.h"
 
 
 class CryptoniteApp {
@@ -55,7 +55,7 @@ public:
     int run(int argc, char **argv){
         addCommand(std::shared_ptr<CryptoniteCommand>{new Configure});
         addCommand(std::shared_ptr<CryptoniteCommand>{new Data});
-        addCommand(std::shared_ptr<CryptoniteCommand>{new Generate});
+        addCommand(std::shared_ptr<CryptoniteCommand>{new StrategyCommand});
 
         setup();
 
