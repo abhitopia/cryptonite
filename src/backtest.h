@@ -256,19 +256,8 @@ struct Backtest {
 
 };
 
-struct Backtester {
-    AcceptanceConfig acceptanceConfig;
-    Dataset dataset;
 
-    Backtester(const AcceptanceConfig& acceptanceConfig, const Dataset& dataset):
-            acceptanceConfig(acceptanceConfig),
-            dataset(dataset)
-    {
-        Indicator::setup(dataset);
-    };
-
-    Backtest evaluate(const Strategy &strategy);
-};
+Backtest doBackTest(const Strategy &strategy, const Dataset& dataset, const AcceptanceConfig acceptanceConfig = AcceptanceConfig{});
 
 Signal computeSignal(Strategy &strategy, const Dataset &dataset);
 

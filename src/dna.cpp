@@ -248,8 +248,9 @@ json StrategyDNA::getStrategyJsonFromGenes() const {
     return j.unflatten();
 }
 
-StrategyDNA::StrategyDNA(std::shared_ptr<Backtester> backtester, json strategy) {
-    _backtester = backtester;
+StrategyDNA::StrategyDNA(std::shared_ptr<Dataset> dataset, json strategy) {
+    _dataset = dataset;
+//    _backtester = backtester;
     _strategyJson = strategy;
     initGenesFromStrategyJson();
     _numBits = 0;
@@ -260,7 +261,7 @@ StrategyDNA::StrategyDNA(std::shared_ptr<Backtester> backtester, json strategy) 
 
 void StrategyDNA::calcFitness() {
     auto strategy = Strategy::fromJson(getStrategyJsonFromGenes());
-    _backtest = std::make_shared<Backtest>(_backtester->evaluate(strategy));
+    _backtest = std::make_shared<Backtest>(doBackTest(strategy, *_dataset.get()));
     _fitness = _backtest->metrics.metric();
 }
 
@@ -270,7 +271,8 @@ StrategyDNA::StrategyDNA(const StrategyDNA &copyFrom) {
 
 void StrategyDNA::copyGenes(const StrategyDNA &copyFrom) {
     DNA::copyGenes(copyFrom);
-    _backtester = copyFrom._backtester;
+//    _backtester = copyFrom._backtester;
+    _dataset = copyFrom._dataset;
     _strategyJson = copyFrom._strategyJson;
 }
 
@@ -284,5 +286,6 @@ string StrategyDNA::getMetric() const {
 
 Backtest StrategyDNA::getBacktest() const {
     auto strategy = Strategy::fromJson(getStrategyJsonFromGenes());
-    return _backtester->evaluate(strategy);
+//    return _backtester->evaluate(strategy);
+    return doBackTest(strategy, *_dataset.get());
 }

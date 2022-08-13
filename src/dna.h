@@ -92,14 +92,15 @@ public:
 
 
 class StrategyDNA: public DNA {
-    std::shared_ptr<Backtester> _backtester{nullptr};
+//    std::shared_ptr<Backtester> _backtester{nullptr};
+    std::shared_ptr<Dataset> _dataset{nullptr};
     std::shared_ptr<Backtest> _backtest{nullptr};
     json _strategyJson{};
     void initGenesFromStrategyJson();
     json getStrategyJsonFromGenes() const;
 public:
     StrategyDNA(map<string, Gene> genes = {}): DNA(genes){};
-    StrategyDNA(std::shared_ptr<Backtester> backtester, json strategy);
+    StrategyDNA(std::shared_ptr<Dataset> dataset, json strategy);
     StrategyDNA(const StrategyDNA& copyFrom);
     void calcFitness() override;
     void copyGenes(const StrategyDNA& copyFrom);
