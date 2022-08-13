@@ -57,9 +57,14 @@ void Dataset::applyNoise() {
         return;
     }
 
-#pragma omp parallel for default(none) if(MULTITHREADED)
+#pragma omp parallel for default(none) shared(std::cout) if(MULTITHREADED)
     for(int i=0; i<numBars; i++){
         double noiseNow = cryptonite::rand(1.0 - noise, 1 + noise);
+//        if(i==0){
+//            std::cout << noise << " " << noiseNow << std::endl;
+//        }
+//        double noiseNow = 1.0 + cryptonite::randn(0.0, noise);
+//        std::cout << noiseNow <<std::endl;
         open[i] *= noiseNow;
         close[i] *= noiseNow;
         high[i] *= noiseNow;

@@ -2,8 +2,8 @@
 // Created by Abhishek Aggarwal on 31/12/2021.
 //
 
-#ifndef CLI_GENERATE_H
-#define CLI_GENERATE_H
+#ifndef CLI_STRATEGY_H
+#define CLI_STRATEGY_H
 
 #include <unordered_map>
 #include <limits>
@@ -69,35 +69,87 @@ struct GeneratedStrategy {
 
 
 
-struct Generate: CryptoniteCommand {
+struct StrategyCommand: CryptoniteCommand {
     json jsonDB{};
     DataStore datastore{};
+
+    void setup(CLI::App& cli_app) override {
+        app = &cli_app;
+        command = app->add_subcommand("strategy", "Generate, optimize and analyse strategies");
+        command->require_subcommand(1);
+
+        auto generateCommand = command->add_subcommand("generate", "Generate strategies.");
+        generateCommand->add_option("--config,-c,config", "Name of the configuration.")
+                ->check(CLI::TypeValidator<std::string>())
+                ->required();
+
+        generateCommand->add_option("--version,-v,version", "Version of the configuration. Default version used if not specified")
+                ->check(CLI::PositiveNumber);
+
+        auto listCommand = addSubcommand("list", "List generated strategies.", -1);
+        auto deleteCommand = addSubcommand("delete", "Delete generated strategies.", -1);
+        auto optimizeCommand = addSubcommand("optimize", "Optimize generated strategies.", -1);
+        auto analyzeCommand = addSubcommand("analyze", "Optimize generated strategies.", -1);
+
+        optimizeCommand->add_flag("--verbose,-V", "Print during optimization");
+        optimizeCommand->add_option("--pop-size,-p", "Size of the population.")
+                ->default_val(500)
+                ->check(CLI::Range(100, 2000, "[100-2000] "));
+        optimizeCommand->add_option("--frac-reproduce,-f", "Fraction of elite population that can reproduce.")
+                ->default_val(0.4)
+                ->check(CLI::Range(0.1, 1.0, "[0.1-1.0] "));
+        optimizeCommand->add_option("--cross-prob,-c", "Recombination probability.")
+                ->default_val(0.9)
+                ->check(CLI::Range(0.1, 1.0, "[0.1-1.0] "));
+
+        analyzeCommand->add_option("--max-noise,-m,max-noise", "Maximum noise level")
+                ->default_val(0.01)
+                ->check(CLI::Range(0.005, 0.05, "[0.005- 0.05] "));
+
+        analyzeCommand->add_option("--num-samples,-s,num-samples", "Number of samples in each step")
+                      ->default_val(100)
+                      ->check(CLI::Range(100, 1000, "[100, 1000] "));
+
+        analyzeCommand->add_option("--num-steps,-d,num-steps", "Number of steps")
+                      ->default_val(10)
+                       ->check(CLI::Range(5, 20, "[5-20] "));
+
+
+        command->fallthrough(true);
+    }
 
     void parse() override {
         datastore = DataStore{app->get_option("--datastore")->as<std::string>()};
         if(command->count() > 0){
             jsonDB = JsonFileHandler::read(app->get_option("--database")->as<std::string>(), true);
-            if(!jsonDB.contains("generated"))
-                jsonDB["generated"] = json::object({});
+            if(!jsonDB.contains("strategies"))
+                jsonDB["strategies"] = json::object({});
 
-            std::string name = command->get_option("--config")->as<std::string>();
-            int version =  command->get_option("--version")->count() > 0 ? command->get_option("--version")->as<int>() : -1;
-            auto subcommands = command->get_subcommands();
-            if(subcommands.size() == 1){
-                CLI::App* subcommand = subcommands[0];
+            CLI::App* subcommand = command->get_subcommands()[0];
+            if(subcommand->check_name("generate")){
+                std::string name = subcommand->get_option("--config")->as<std::string>();
+                int version =  subcommand->get_option("--version")->count() > 0 ? subcommand->get_option("--version")->as<int>() : -1;
+                if(!hasConfig(name, version)){
+                    std::string versionUsed = version < 0 ? "default" : std::to_string(version);
+                    std::cout << "Configuration `" << name << "` (version: " << versionUsed << ") does not exist!" << std::endl;
+                    return;
+                }
+
+                auto config = getConfig(name, version);
+                showConfig(name, version);
+                generate(config);
+            } else {
                 json filter;
                 filter["name"] = subcommand->get_option("--name")->as<std::string>();
                 filter["quoteAsset"] = subcommand->get_option("--quoteAsset")->as<std::string>();
                 filter["baseAsset"] = subcommand->get_option("--baseAsset")->as<std::string>();
                 filter["interval"] = subcommand->get_option("--interval")->as<std::string>();
                 filter["version"] = subcommand->get_option("--version")->as<int>();
-
                 auto generatedStrategies = loadGeneratedStrategies(filter);
                 if(generatedStrategies.size() == 0){
-                    std::cout << "No generated strategies match the criteria!!" << std::endl;
+                    std::cout << "No strategies match the criteria!!" << std::endl;
                     return;
                 }
-
                 if(subcommand->check_name("list")){
                     showTopN(generatedStrategies);
                 } else if(subcommand->check_name("delete")){
@@ -107,78 +159,57 @@ struct Generate: CryptoniteCommand {
                     if(answer == 'd') {
                         deleteGenerateStrategies(generatedStrategies);
                     }
-                    return;
                 } else if(subcommand->check_name("optimize")){
-
                     showTopN(generatedStrategies, "Following strategies will be optimized");
-
                     int popSize = subcommand->get_option("--pop-size")->as<int>();
                     double fractionReproduce = subcommand->get_option("--frac-reproduce")->as<double>();
                     double crossProb = subcommand->get_option("--cross-prob")->as<double>();
                     bool verbose = subcommand->get_option("--verbose")->as<bool>();
                     optimize(generatedStrategies, popSize, fractionReproduce, crossProb, verbose);
+                } else if(subcommand->check_name("analyze")){
+                    showTopN(generatedStrategies, "Following strategies will be analyzed");
+                    double noise = subcommand->get_option("--max-noise")->as<double>();
+                    int numSamples = subcommand->get_option("--num-samples")->as<int>();
+                    int numSteps = subcommand->get_option("--num-steps")->as<int>();
+                    analyze(generatedStrategies, noise, numSamples, numSteps);
                 }
-
-                return;
             }
-
-
-            if(!hasConfig(name, version)){
-                std::string versionUsed = version < 0 ? "default" : std::to_string(version);
-                std::cout << "Configuration `" << name << "` (version: " << versionUsed << ") does not exist!" << std::endl;
-                return;
-            }
-
-            auto config = getConfig(name, version);
-            showConfig(name, version);
-            generate(config);
         }
     }
 
 
-
-    void setup(CLI::App& cli_app) override {
-        app = &cli_app;
-        command = app->add_subcommand("generate", "Generate a strategy");
-
-        command->add_option("--config,-c,config", "Name of the configuration.")
-                    ->check(CLI::TypeValidator<std::string>());
-//                     ->required();
-
-        command->add_option("--version,-v,version", "Version of the configuration. Default version used if not specified")
-                    ->check(CLI::PositiveNumber);
-
-        auto listCommand = command->add_subcommand("list", "List generated strategies.");
-        auto deleteCommand = command->add_subcommand("delete", "Delete generated strategies.");
-        auto optimizeCommand = command->add_subcommand("optimize", "Optimize generated strategies.");
-        command->require_subcommand(0, 1);
-        addSubcommandOptions(listCommand, -1);
-        addSubcommandOptions(deleteCommand, -1);
-        addSubcommandOptions(optimizeCommand, 0);
-
-        optimizeCommand->add_flag("--verbose,-V", "Print during optimization");
-        optimizeCommand->add_option("--pop-size,-p", "Size of the population.")
-                        ->default_val(500)
-                        ->check(CLI::Range(100, 2000))
-                        ->check(CLI::PositiveNumber);
-        optimizeCommand->add_option("--frac-reproduce,-f", "Fraction of elite population that can reproduce.")
-                ->default_val(0.4)
-                ->check(CLI::Range(0.1, 1.0))
-                ->check(CLI::TypeValidator<double>());
-        optimizeCommand->add_option("--cross-prob,-c", "Recombination probability.")
-                ->default_val(0.9)
-                ->check(CLI::Range(0.1, 1.0))
-                ->check(CLI::TypeValidator<double>());
-
-        command->fallthrough(true);
+private:
+    CLI::App* addSubcommand(string name, string info, int versionDefault){
+        auto subcommand = command->add_subcommand(name, info);
+        subcommand->add_option("--name,-n", "Filter strategy by name");
+        subcommand->add_option("--baseAsset,-b,baseAsset", "Filter strategies by base asset")->excludes("--name");
+        subcommand->add_option("--quoteAsset,-q,quoteAsset", "Filter strategies by quote asset")->excludes("--name");
+        subcommand->add_option("--interval,-i,interval", "Filter strategies by interval")->excludes("--name");
+        subcommand->add_option("--version,-v", "Filter strategies by version. `0` for unoptimized strategies.")
+                ->default_val(versionDefault)
+                ->check(CLI::Range(-1, 100, "[0, Inf] "));
+        return subcommand;
     }
 
+    void analyze(std::vector<GeneratedStrategy> strategies, double noise, int numSamples, int numSteps){
+        for(auto generatedStrategy: strategies){
+            std::cout << "--------------------------------" << generatedStrategy.name << std::endl;
+            for(int s=0; s < numSteps + 1; s++){
+                double noise_s = (s*noise)/numSteps;
+                DataSetConfig dataSetConfig = DataSetConfig::fromJson(generatedStrategy.dataset);
+                vector<Metrics> metrics(numSamples);
+                for(int n=0; n < numSamples; n++){
+                    auto strategy = Strategy::fromJson(generatedStrategy.strategy);
+                    auto backtest = doBackTest(strategy, datastore.getDataset(dataSetConfig, noise_s));
+                    metrics[n] = backtest.metrics;
+                }
+                std::sort(metrics.begin(), metrics.end(), std::greater<Metrics>());
+                std::cout << noise_s << ": " << metrics[0].metric() << " : " << metrics[numSamples-1].metric() << std::endl;
+            }
+        }
+    }
 
-private:
     void optimize(std::vector<GeneratedStrategy> strategies, size_t populationSize, double fractionReproduce, double recombinationProb, bool verbose=false){
-
-        AcceptanceConfig acceptanceConfig{};
-
         int i = 0;
         for(auto generatedStrategy: strategies){
             i += 1;
@@ -186,9 +217,9 @@ private:
             showTopN(std::vector<GeneratedStrategy>{generatedStrategy}, "Optimizing Strategy : " + appendix);
             DataSetConfig dataSetConfig = DataSetConfig::fromJson(generatedStrategy.dataset);
             // TODO(abhi) this calls Indicator::setup every single time. It might be more efficient to cache those value in datastore manager
-            auto backtester = std::make_shared<Backtester>(acceptanceConfig,
-                                  datastore.getDataset(dataSetConfig));
-            StrategyDNA strategyDna{backtester, generatedStrategy.strategy};
+            auto dataset = std::make_shared<Dataset>(datastore.getDataset(dataSetConfig));
+//            Indicator::setup(*dataset.get()); // This is not needed since we use existing value
+            StrategyDNA strategyDna{dataset, generatedStrategy.strategy};
             GeneticAlgorithm<StrategyDNA> ga{strategyDna, populationSize, fractionReproduce, recombinationProb , -1.0};
             ga.optimize(5, verbose);
             Backtest backtest = ga.getBestDNA().getBacktest();
@@ -197,21 +228,11 @@ private:
         }
     }
 
-    void addSubcommandOptions(CLI::App* subcommand, int versionDefault){
-        subcommand->add_option("--name,-n", "Filter by generated strategy name");
-        subcommand->add_option("--baseAsset,-b,baseAsset", "Filter by base asset")->excludes("--name");
-        subcommand->add_option("--quoteAsset,-q,quoteAsset", "Filter by quote asset")->excludes("--name");
-        subcommand->add_option("--interval,-i,interval", "Filter by interval")->excludes("--name");
-        subcommand->add_option("--version,-v", "Filter by version. `0` for unoptimized strategies.")
-                    ->default_val(versionDefault)
-                    ->check(CLI::TypeValidator<int>());
 
-
-    }
 
     void deleteGenerateStrategies(std::vector<GeneratedStrategy> strategies){
         for(auto strategy: strategies){
-            jsonDB["generated"].erase(strategy.name);
+            jsonDB["strategies"].erase(strategy.name);
         }
 
         JsonFileHandler::write(app->get_option("--database")->as<std::string>(), jsonDB);
@@ -222,7 +243,7 @@ private:
         std::vector<GeneratedStrategy> generatedStrategies{};
         auto topN = TopNContainer<GeneratedStrategy>{1000};
 
-        if(not jsonDB.contains("generated") ){
+        if(not jsonDB.contains("strategies") ){
             return generatedStrategies;
         };
 
@@ -232,7 +253,11 @@ private:
         auto interval = filter["interval"].get<std::string>();
         auto version = filter["version"].get<int>();
 
-        for(auto& [name, value]: jsonDB["generated"].items()){
+        for(auto& [name, value]: jsonDB["strategies"].items()){
+            if(strategyName.length() > 0 and strategyName != name){
+                continue;
+            }
+
             int defaultVersion = value["defaultVersion"].get<int>();
 
             if(version >= 0 and defaultVersion != version){
@@ -358,15 +383,15 @@ private:
 
     void generate(json config){
         auto strategyGenConfig = getStrategyConfig(config);
-        Backtester backtester{strategyGenConfig.acceptanceConfig, datastore.getDataset(strategyGenConfig.dataSetConfig)};
-
+        auto dataset = datastore.getDataset(strategyGenConfig.dataSetConfig);
+        Indicator::setup(dataset);  // This only needs to be done for generation
         double start_time = omp_get_wtime();
         auto topN = TopNContainer<GeneratedStrategy>{10};
         unsigned long numEvaluated = 0;
-        #pragma omp parallel for default(none) shared(numEvaluated, start_time, topN, backtester, strategyGenConfig) if(MULTITHREADED)
+        #pragma omp parallel for default(none) shared(numEvaluated, start_time, topN, dataset, strategyGenConfig) if(MULTITHREADED)
         for(unsigned long i=0; i<ULONG_MAX; i++){
             Strategy strategy = Strategy::generate(strategyGenConfig);
-            Backtest backtest = backtester.evaluate(strategy);
+            Backtest backtest = doBackTest(strategy, dataset);
             if(backtest.metrics.metric() > 0){
                 topN.insert(saveGeneratedStrategy(backtest, getNewName(), 0));
             }
@@ -382,7 +407,7 @@ private:
 
     std::string getNewName(){
         std::string name = get_random_name();
-        while (jsonDB["generated"].contains(name)){
+        while (jsonDB["strategies"].contains(name)){
             name = get_random_name();
         }
         return name;
@@ -390,12 +415,12 @@ private:
 
     GeneratedStrategy saveGeneratedStrategy(const Backtest &backtest, std::string name, int version) {
         GeneratedStrategy strategy = GeneratedStrategy::fromBacktest(name, version, backtest);
-        if(!jsonDB["generated"].contains(name)){
-            jsonDB["generated"][name] = json::object({});
-            jsonDB["generated"][name]["versions"] = json::array();
+        if(!jsonDB["strategies"].contains(name)){
+            jsonDB["strategies"][name] = json::object({});
+            jsonDB["strategies"][name]["versions"] = json::array();
         }
-        jsonDB["generated"][name]["versions"].push_back(strategy.toJson());
-        jsonDB["generated"][name]["defaultVersion"] = jsonDB["generated"][name]["versions"].size() - 1;
+        jsonDB["strategies"][name]["versions"].push_back(strategy.toJson());
+        jsonDB["strategies"][name]["defaultVersion"] = jsonDB["strategies"][name]["versions"].size() - 1;
         JsonFileHandler::write(app->get_option("--database")->as<std::string>(), jsonDB);
         return strategy;
     }

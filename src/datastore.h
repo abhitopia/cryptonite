@@ -14,6 +14,7 @@
 #include "../include/progress.hpp"
 #include "config.h"
 #include "dataset.h"
+#include "indicator.h"
 
 
 namespace fs = std::filesystem;
