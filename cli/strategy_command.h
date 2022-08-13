@@ -82,17 +82,9 @@ struct Generate: CryptoniteCommand {
 
             std::string name = command->get_option("--config")->as<std::string>();
             int version =  command->get_option("--version")->count() > 0 ? command->get_option("--version")->as<int>() : -1;
-            if(command->got_subcommand("list") || command->got_subcommand("delete")
-            || command->got_subcommand("optimize")){
-                CLI::App* subcommand;
-                if(command->got_subcommand("list")){
-                    subcommand = command->get_subcommand("list");
-                } else if(command->got_subcommand("delete")){
-                    subcommand = command->get_subcommand("delete");
-                } else {
-                    subcommand = command->get_subcommand("optimize");
-                }
-
+            auto subcommands = command->get_subcommands();
+            if(subcommands.size() == 1){
+                CLI::App* subcommand = subcommands[0];
                 json filter;
                 filter["name"] = subcommand->get_option("--name")->as<std::string>();
                 filter["quoteAsset"] = subcommand->get_option("--quoteAsset")->as<std::string>();
@@ -106,9 +98,9 @@ struct Generate: CryptoniteCommand {
                     return;
                 }
 
-                if(command->got_subcommand("list")){
+                if(subcommand->check_name("list")){
                     showTopN(generatedStrategies);
-                } else if(command->got_subcommand("delete")){
+                } else if(subcommand->check_name("delete")){
                     showTopN(generatedStrategies, "Are you sure you want to delete these?");
                     std::cout << "Press `d` to delete listed strategies: ";
                     char answer = std::cin.get();
@@ -116,7 +108,7 @@ struct Generate: CryptoniteCommand {
                         deleteGenerateStrategies(generatedStrategies);
                     }
                     return;
-                } else if(command->got_subcommand("optimize")){
+                } else if(subcommand->check_name("optimize")){
 
                     showTopN(generatedStrategies, "Following strategies will be optimized");
 
@@ -159,7 +151,7 @@ struct Generate: CryptoniteCommand {
         auto listCommand = command->add_subcommand("list", "List generated strategies.");
         auto deleteCommand = command->add_subcommand("delete", "Delete generated strategies.");
         auto optimizeCommand = command->add_subcommand("optimize", "Optimize generated strategies.");
-
+        command->require_subcommand(0, 1);
         addSubcommandOptions(listCommand, -1);
         addSubcommandOptions(deleteCommand, -1);
         addSubcommandOptions(optimizeCommand, 0);
