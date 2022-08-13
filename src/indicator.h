@@ -80,7 +80,7 @@ public:
         return false;
     }
     std::string get_name();
-    static void setup(const Dataset& dataset, int seed=-1);
+    static void setup(const Dataset& dataset);
 };
 
 class AcceleratorOscillator: public Indicator {

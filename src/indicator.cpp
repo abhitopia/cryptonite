@@ -631,8 +631,7 @@ std::unordered_map<std::string,std::shared_ptr<Indicator>> _setName2Indicator(){
 std::unordered_map<std::string,std::shared_ptr<Indicator>> Name2Indicator = _setName2Indicator();
 
 
-void Indicator::setup(const Dataset &dataset, int seed) {
-    cryptonite::seed(seed);
+void Indicator::setup(const Dataset &dataset) {
     int num_bars = dataset.numBars;
     int num_indicators = Indicators.size();
     for(int i=0; i<num_indicators; i++){
