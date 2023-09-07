@@ -34,6 +34,7 @@
 cmake-build-*/**
 #cmake-build-/**
 
+build/**
 *.csv
 
 *.json

@@ -5,7 +5,7 @@
 #ifndef CRYPTONITE_BINANCE_H
 #define CRYPTONITE_BINANCE_H
 #include <iostream>
-#include "json.h"
+#include "../include/json.h"
 #include <cpr/cpr.h>
 
 using json = nlohmann::json;

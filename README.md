@@ -1,7 +1,8 @@
 # References
 - [date/date.h](https://stackoverflow.com/questions/21021388/how-to-parse-a-date-string-into-a-c11-stdchrono-time-point-or-similar)
 - [csv/csv.h](https://github.com/ben-strasser/fast-cpp-csv-parser)
-
+- [genetic algorithm](https://www.timvoelcker.de/genetic_algorithm.html)
+- 
 
 # TODOs
 - [x] Check why short trade is never entered
@@ -28,3 +29,8 @@
 - [x] The backtest seems to be incorrect. Check why?
 - [x] Format table and output in generate command
 - [ ] Refreshing table
+- [ ] Add a strategy command,
+  - [x] Subcommand List
+  - [ ] Subcommand Optimize
+  - [ ] Subcommand deploy
+- [x] Move the Indicator::setup to Datastore and make backtester a function

@@ -244,8 +244,8 @@ void GeneticAlgorithm<DNA>::evolveNextGeneration()
 //         MUTATION  (See Tutorial)
         child1->mutateGenes(_mutationProbability);
         child2->mutateGenes(_mutationProbability);
-        child1->calcFitness();
-        child2->calcFitness();
+        child1->calcFitness(_numEvolvedGenerations); // Pass generation
+        child2->calcFitness(_numEvolvedGenerations);  // Pass generation
     }
 
     // REPLACEMENT  (See Tutorial)

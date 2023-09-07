@@ -16,7 +16,7 @@ public:
     TestDNA(map<std::string, Gene>& genes): DNA(genes){};
     TestDNA(): DNA(){};
 
-    void calcFitness(){
+    void calcFitness(size_t gen=0){
         _fitness = 0;
         for(auto& it: _genes){
             _fitness -= std::pow(target - it.second.getValue(), 2);

@@ -87,22 +87,24 @@ public:
     void copyGenes(const DNA& copyFrom);
     void recombineGenes(std::shared_ptr<DNA> parent1, std::shared_ptr<DNA> parent2);
     void mutateGenes(double probability=-1.0);
-    virtual void calcFitness() = 0;
+    virtual void calcFitness(size_t gen) = 0;
 };
 
 
 class StrategyDNA: public DNA {
 //    std::shared_ptr<Backtester> _backtester{nullptr};
-    std::shared_ptr<Dataset> _dataset{nullptr};
-    std::shared_ptr<Backtest> _backtest{nullptr};
+//    std::shared_ptr<Dataset> _dataset{nullptr};
+    std::shared_ptr<DataSetContainer> _datasetContainer{nullptr};
     json _strategyJson{};
     void initGenesFromStrategyJson();
     json getStrategyJsonFromGenes() const;
 public:
+    std::shared_ptr<Backtest> backtest{nullptr};
     StrategyDNA(map<string, Gene> genes = {}): DNA(genes){};
-    StrategyDNA(std::shared_ptr<Dataset> dataset, json strategy);
+//    StrategyDNA(std::shared_ptr<Dataset> dataset, json strategy);
+    StrategyDNA(std::shared_ptr<DataSetContainer> container, json strategy);
     StrategyDNA(const StrategyDNA& copyFrom);
-    void calcFitness() override;
+    void calcFitness(size_t gen = 0) override;
     void copyGenes(const StrategyDNA& copyFrom);
     string getMetric() const;
     Backtest getBacktest() const;

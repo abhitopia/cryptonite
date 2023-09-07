@@ -134,6 +134,10 @@ public:
         return dataSetContainer.dataset(noise);
     }
 
+    DataSetContainer getContainer(){
+        return dataSetContainer;
+    }
+
     void update(){
         updateDataJson();
         updateDataset();
@@ -174,6 +178,11 @@ public:
     Dataset getDataset(const DataSetConfig& datasetConfig, double noise=0.0){
         auto key = addDataset(datasetConfig);
         return datasetManagerMap[key].getDataset(noise);
+    }
+
+    DataSetContainer getContainer(const DataSetConfig& datasetConfig){
+        auto key = addDataset(datasetConfig);
+        return datasetManagerMap[key].getContainer();
     }
 };
 

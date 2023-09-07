@@ -217,9 +217,11 @@ private:
             showTopN(std::vector<GeneratedStrategy>{generatedStrategy}, "Optimizing Strategy : " + appendix);
             DataSetConfig dataSetConfig = DataSetConfig::fromJson(generatedStrategy.dataset);
             // TODO(abhi) this calls Indicator::setup every single time. It might be more efficient to cache those value in datastore manager
-            auto dataset = std::make_shared<Dataset>(datastore.getDataset(dataSetConfig));
+//            auto dataset = std::make_shared<Dataset>(datastore.getDataset(dataSetConfig));
 //            Indicator::setup(*dataset.get()); // This is not needed since we use existing value
-            StrategyDNA strategyDna{dataset, generatedStrategy.strategy};
+//            StrategyDNA strategyDna{dataset, generatedStrategy.strategy};
+            auto container = std::make_shared<DataSetContainer>(datastore.getContainer(dataSetConfig));
+            StrategyDNA strategyDna{container, generatedStrategy.strategy};
             GeneticAlgorithm<StrategyDNA> ga{strategyDna, populationSize, fractionReproduce, recombinationProb , -1.0};
             ga.optimize(5, verbose);
             Backtest backtest = ga.getBestDNA().getBacktest();
@@ -254,9 +256,6 @@ private:
         auto version = filter["version"].get<int>();
 
         for(auto& [name, value]: jsonDB["strategies"].items()){
-            if(strategyName.length() > 0 and strategyName != name){
-                continue;
-            }
 
             int defaultVersion = value["defaultVersion"].get<int>();
 

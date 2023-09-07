@@ -243,14 +243,14 @@ json StrategyDNA::getStrategyJsonFromGenes() const {
     json j = _strategyJson.flatten();
     for(const auto& [key, gene]: _genes){
         j[key] = gene.getValue();
-//        std::cout << key << " " << gene.getValue() << std::endl;
     }
     return j.unflatten();
 }
 
-StrategyDNA::StrategyDNA(std::shared_ptr<Dataset> dataset, json strategy) {
-    _dataset = dataset;
+StrategyDNA::StrategyDNA(std::shared_ptr<DataSetContainer> container, json strategy) {
+//    _dataset = dataset;
 //    _backtester = backtester;
+    _datasetContainer = container;
     _strategyJson = strategy;
     initGenesFromStrategyJson();
     _numBits = 0;
@@ -259,10 +259,12 @@ StrategyDNA::StrategyDNA(std::shared_ptr<Dataset> dataset, json strategy) {
     }
 }
 
-void StrategyDNA::calcFitness() {
+void StrategyDNA::calcFitness(size_t gen) {
     auto strategy = Strategy::fromJson(getStrategyJsonFromGenes());
-    _backtest = std::make_shared<Backtest>(doBackTest(strategy, *_dataset.get()));
-    _fitness = _backtest->metrics.metric();
+//    std::cout << gen << " : " << std::min((gen+1)*0.001, 0.1) << std::endl;
+    auto dataset = _datasetContainer->dataset(std::min((gen+1)*0.001, 0.1));
+    backtest = std::make_shared<Backtest>(doBackTest(strategy, dataset));
+    _fitness = backtest->metrics.metric();
 }
 
 StrategyDNA::StrategyDNA(const StrategyDNA &copyFrom) {
@@ -272,13 +274,14 @@ StrategyDNA::StrategyDNA(const StrategyDNA &copyFrom) {
 void StrategyDNA::copyGenes(const StrategyDNA &copyFrom) {
     DNA::copyGenes(copyFrom);
 //    _backtester = copyFrom._backtester;
-    _dataset = copyFrom._dataset;
+//    _dataset = copyFrom._dataset;
+    _datasetContainer = copyFrom._datasetContainer;
     _strategyJson = copyFrom._strategyJson;
 }
 
 string StrategyDNA::getMetric() const {
     string result = std::to_string(_fitness) + " ";
-    json metrics = _backtest->metrics.toJson();
+    json metrics = backtest->metrics.toJson();
     result += "\tNum Trades: " + std::to_string(metrics["numTrades"].get<int>());
     result += "\tCAGROverAvgDrawDown: " + std::to_string(metrics["CAGROverAvgDrawDown"].get<double>());
     return result;
@@ -286,6 +289,5 @@ string StrategyDNA::getMetric() const {
 
 Backtest StrategyDNA::getBacktest() const {
     auto strategy = Strategy::fromJson(getStrategyJsonFromGenes());
-//    return _backtester->evaluate(strategy);
-    return doBackTest(strategy, *_dataset.get());
+    return doBackTest(strategy, _datasetContainer->dataset());
 }
